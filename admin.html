@@ -1,0 +1,2665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="version" content="2026-04-29-v4">
+<title>Plan&amp;jar — Painel da Construtora</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1C3D5A;--navy-dark:#122738;--navy-light:#2A5580;
+  --teal:#1A7A9A;--teal-light:#D6EEF6;
+  --green:#1A8A55;--green-bg:#E8F5EE;--green-deep:#0E4A2E;
+  --orange:#C05A00;--orange-bg:#FEF3E2;
+  --red:#C0392B;--red-bg:#FDECEA;
+  --gray:#6B7F90;--gray-bg:#F4F7FA;
+  --border:#D0DDE8;--bg:#EDF2F7;--white:#FFFFFF;
+  --text:#1A2D3D;--muted:#6B8296;--row-alt:#F7FAFD;
+}
+html,body{overflow-x:hidden}
+body{font-family:'Poppins',system-ui,sans-serif;background:var(--bg);min-height:100vh;color:var(--text);-webkit-font-smoothing:antialiased;animation:fade .5s ease both}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px) scale(.95)}to{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(30px) scale(.95)}}
+
+/* ═══════════ LOGO Plan&jar (visualmente parece "Planejar") ═══════════ */
+.logo-text{
+  font-family:'Poppins',sans-serif;
+  font-weight:700;
+  letter-spacing:-.4px;
+  line-height:1;
+  display:inline-flex;
+  align-items:baseline;
+  white-space:nowrap;
+}
+.logo-text .lamp{
+  font-weight:600;
+  margin:0 -.05em;
+  transform:translateY(-.06em);
+  font-size:.88em;
+  opacity:.92;
+}
+
+/* ══════════════ LOGIN SCREEN ══════════════ */
+.login-screen{
+  min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;
+  background:
+    radial-gradient(ellipse at top left,rgba(26,122,154,.18),transparent 55%),
+    radial-gradient(ellipse at bottom right,rgba(42,85,128,.25),transparent 55%),
+    linear-gradient(135deg,var(--navy-dark),var(--navy) 60%,var(--navy-light));
+}
+.login-card{
+  background:#fff;border-radius:14px;box-shadow:0 24px 80px rgba(0,0,0,.35),0 4px 12px rgba(0,0,0,.15);
+  width:100%;max-width:430px;overflow:hidden;animation:slideUp .5s cubic-bezier(.2,.7,.3,1) both;
+}
+.login-top{background:var(--navy-dark);padding:26px 28px;display:flex;align-items:center;gap:14px}
+.login-logo{width:48px;height:48px;border-radius:8px;background:linear-gradient(135deg,var(--teal),var(--navy-light));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;letter-spacing:.5px;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.login-brand{display:flex;flex-direction:column;gap:3px}
+.login-brand-name{font-size:18px;color:#fff;line-height:1}
+.login-brand-tag{font-size:9px;color:rgba(255,255,255,.5);letter-spacing:1.8px;text-transform:uppercase}
+.login-body{padding:30px 28px 26px}
+.login-title{font-size:19px;font-weight:600;margin-bottom:6px}
+.login-sub{font-size:12.5px;color:var(--muted);margin-bottom:22px;line-height:1.5}
+.form-field{margin-bottom:14px}
+.form-lbl{display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--muted);margin-bottom:7px}
+.form-input{width:100%;padding:11px 14px;font-size:13.5px;font-family:'Poppins',sans-serif;color:var(--text);border:2px solid var(--border);border-radius:8px;background:#FAFCFE;outline:none;transition:all .2s}
+.form-input:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 4px rgba(26,122,154,.12)}
+.form-input.error{border-color:var(--red);background:var(--red-bg)}
+.login-btn{width:100%;margin-top:10px;padding:12px;font-size:12px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#fff;background:linear-gradient(135deg,var(--teal),var(--navy-light));border:none;border-radius:8px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all .2s;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.login-btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 20px rgba(26,122,154,.35)}
+.login-btn:disabled{opacity:.6;cursor:not-allowed}
+.login-err{font-size:11.5px;color:var(--red);margin-top:10px;padding:10px 12px;background:var(--red-bg);border-radius:6px;border-left:3px solid var(--red);display:none}
+.login-err.show{display:block;animation:slideDown .3s ease}
+.back-link{display:inline-flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);text-decoration:none;margin-top:16px;transition:color .2s}
+.back-link:hover{color:var(--navy)}
+.spin{width:13px;height:13px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+
+/* ══════════════ ADMIN PANEL ══════════════ */
+.admin{display:none}
+.admin.active{display:block}
+
+.topbar{background:var(--navy-dark);padding:0;animation:slideDown .4s ease both}
+.topbar-inner{max-width:1380px;margin:0 auto;padding:14px 28px;display:flex;align-items:center;gap:16px}
+.topbar-logo{width:38px;height:38px;border-radius:7px;background:linear-gradient(135deg,var(--teal),var(--navy-light));display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px;letter-spacing:.5px}
+.topbar-brand{display:flex;flex-direction:column;gap:2px}
+.topbar-name{font-size:16px;color:#fff;line-height:1}
+.topbar-tag{font-size:9px;color:rgba(255,255,255,.5);letter-spacing:1.5px;text-transform:uppercase}
+.topbar-spacer{flex:1}
+.topbar-user{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.75);font-size:12px}
+.topbar-user strong{color:#fff;font-weight:500}
+.logout-btn{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;padding:6px 14px;border-radius:6px;font-size:11px;font-family:'Poppins',sans-serif;cursor:pointer;transition:all .2s;font-weight:500}
+.logout-btn:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3)}
+
+.shell{max-width:1380px;margin:0 auto;padding:28px}
+
+/* ══════════════ TOPBAR NAV (Abas Obras / Empresa) ══════════════ */
+.topbar-nav{
+  border-top:1px solid rgba(255,255,255,.08);
+  background:rgba(0,0,0,.2);
+}
+.topbar-nav-inner{
+  max-width:1380px;margin:0 auto;padding:0 28px;
+  display:flex;gap:2px;
+}
+.adm-tab{
+  background:transparent;border:none;font-family:inherit;
+  padding:13px 18px;font-size:12.5px;font-weight:500;
+  color:rgba(255,255,255,.65);cursor:pointer;
+  border-bottom:3px solid transparent;
+  display:inline-flex;align-items:center;gap:8px;letter-spacing:.3px;
+  transition:all .2s;
+}
+.adm-tab:hover{color:#fff;background:rgba(255,255,255,.04)}
+.adm-tab.active{color:#fff;border-bottom-color:var(--teal);background:rgba(26,122,154,.15)}
+
+.adm-pane{display:none}
+.adm-pane.active{display:block}
+
+/* ══════════════ MINHA EMPRESA ══════════════ */
+.empresa-grid{
+  display:grid;grid-template-columns:340px 1fr;gap:24px;
+}
+.preview-col{position:sticky;top:24px;align-self:start}
+.preview-card{
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:0;overflow:hidden;
+  box-shadow:0 4px 16px rgba(10,30,60,.06);
+}
+.preview-hdr{
+  background:var(--navy-dark);padding:16px 18px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.preview-logo{
+  width:44px;height:44px;border-radius:8px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:18px;letter-spacing:.5px;
+  box-shadow:0 2px 6px rgba(0,0,0,.25);
+}
+.preview-logo.has-img{background:#fff;padding:3px}
+.preview-logo img{width:100%;height:100%;object-fit:contain;border-radius:5px}
+.preview-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.preview-name{font-size:15px;font-weight:700;color:#fff;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview-tag{font-size:9px;color:rgba(255,255,255,.55);letter-spacing:1.4px;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preview-bar{height:8px;background:linear-gradient(90deg,var(--prev-color, var(--teal)),var(--prev-color-2, var(--navy-light)))}
+.preview-body{padding:16px 18px}
+.preview-mini-row{
+  display:flex;align-items:center;gap:8px;padding:6px 0;
+  font-size:11.5px;color:var(--text);
+}
+.preview-bar-mini{flex:1;height:6px;background:#E8EEF5;border-radius:3px;overflow:hidden;position:relative}
+.preview-bar-mini-fill{height:100%;border-radius:3px;background:var(--prev-color, var(--teal))}
+.preview-pill{font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;background:#FEF3E2;color:#8B4000}
+.preview-info{
+  font-size:11px;color:var(--muted);text-align:center;
+  margin-top:14px;line-height:1.5;font-style:italic;
+}
+
+.empresa-form-card{
+  background:#fff;border:1px solid var(--border);border-radius:12px;padding:24px;
+}
+.empresa-form-card + .empresa-form-card{margin-top:18px}
+.empresa-form-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px;letter-spacing:.3px}
+.empresa-form-sub{font-size:12px;color:var(--muted);margin-bottom:18px;line-height:1.5}
+
+.color-picker{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.color-swatch{
+  width:32px;height:32px;border-radius:7px;cursor:pointer;
+  transition:all .15s;border:2px solid transparent;
+}
+.color-swatch:hover{transform:scale(1.12)}
+.color-swatch.active{border-color:#1A2D3D;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--text)}
+.color-swatch.custom{
+  background:linear-gradient(135deg,#FF008C 0,#FFD500 25%,#00C853 50%,#00B0FF 75%,#7C4DFF 100%);
+  position:relative;color:#fff;font-size:14px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+}
+.color-swatch.custom input{
+  position:absolute;inset:0;opacity:0;cursor:pointer;
+}
+
+.logo-upload{
+  display:grid;grid-template-columns:auto 1fr;gap:18px;align-items:center;
+}
+.logo-preview{
+  width:96px;height:96px;border-radius:10px;border:2px dashed var(--border);
+  display:flex;align-items:center;justify-content:center;
+  background:var(--gray-bg);overflow:hidden;flex-shrink:0;
+}
+.logo-preview.has-img{border-style:solid;background:#fff}
+.logo-preview img{width:100%;height:100%;object-fit:contain;padding:6px}
+.logo-preview.fallback{
+  background:linear-gradient(135deg,var(--teal),var(--navy-light));
+  border-style:solid;color:#fff;font-weight:700;font-size:38px;
+}
+.logo-actions{display:flex;flex-direction:column;gap:8px}
+.logo-actions input[type="file"]{display:none}
+.upload-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:9px 14px;background:#fff;border:1px solid var(--border);
+  border-radius:7px;cursor:pointer;font-family:inherit;
+  font-size:12px;font-weight:500;color:var(--text);transition:all .15s;
+}
+.upload-btn:hover{border-color:var(--teal);color:var(--teal)}
+.upload-info{font-size:11px;color:var(--muted);line-height:1.5}
+
+.empresa-actions{
+  display:flex;justify-content:flex-end;gap:10px;margin-top:18px;
+  padding-top:18px;border-top:1px solid var(--border);
+}
+.save-status{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:12px;color:var(--muted);margin-right:auto;align-self:center;
+}
+.save-status.saved{color:var(--green-deep)}
+.save-status.saving{color:var(--orange)}
+.save-status.error{color:var(--red)}
+.save-status .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+@media (max-width:880px){
+  .empresa-grid{grid-template-columns:1fr}
+  .preview-col{position:static}
+}
+
+/* Seção branding por obra (modal) */
+.obra-branding-section{
+  margin-top:18px;border-top:1px solid var(--border);padding-top:14px;
+}
+.obra-branding-toggle{
+  display:flex;align-items:center;gap:8px;cursor:pointer;
+  padding:8px 10px;border-radius:6px;
+  font-size:13px;color:var(--text);transition:background .15s;
+  user-select:none;
+}
+.obra-branding-toggle:hover{background:var(--gray-bg)}
+.obra-branding-toggle .chev{font-size:11px;transition:transform .2s;color:var(--muted)}
+.obra-branding-toggle.open .chev{transform:rotate(90deg)}
+.obra-branding-hint{color:var(--muted);font-size:12px;font-weight:400}
+.obra-branding-body{padding:14px 10px 6px;animation:fadeIn .25s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+
+.page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:22px;flex-wrap:wrap;gap:14px}
+.page-title{font-size:22px;font-weight:600;color:var(--text)}
+.page-sub{font-size:12.5px;color:var(--muted);margin-top:3px}
+
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn-primary{background:linear-gradient(135deg,var(--teal),var(--navy-light));color:#fff;border:none;padding:10px 18px;border-radius:7px;font-size:12px;font-weight:600;letter-spacing:.8px;cursor:pointer;font-family:'Poppins',sans-serif;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(26,122,154,.3)}
+.btn-secondary{background:#fff;color:var(--navy);border:1px solid var(--border);padding:10px 18px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;font-family:'Poppins',sans-serif;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-secondary:hover{border-color:var(--navy);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.06)}
+
+/* Stats */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.stat{background:#fff;border-radius:10px;padding:18px 20px;box-shadow:0 4px 14px rgba(10,30,60,.06);border:1px solid var(--border)}
+.stat-lbl{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:6px}
+.stat-val{font-size:24px;font-weight:700;color:var(--navy-dark);line-height:1}
+.stat-hint{font-size:11px;color:var(--muted);margin-top:5px}
+
+/* Obras table */
+.obras-card{background:#fff;border-radius:10px;box-shadow:0 4px 14px rgba(10,30,60,.06);border:1px solid var(--border);overflow:hidden}
+.obras-hdr{padding:16px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.obras-title{font-size:14px;font-weight:600;color:var(--text)}
+.search-wrap{position:relative}
+.search-input{padding:8px 12px 8px 34px;font-size:12px;font-family:'Poppins',sans-serif;border:1px solid var(--border);border-radius:6px;outline:none;width:220px;transition:all .2s}
+.search-input:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(26,122,154,.1)}
+.search-icon{position:absolute;left:11px;top:50%;transform:translateY(-50%);color:var(--muted)}
+
+.obras-table{width:100%;border-collapse:collapse}
+.obras-table thead th{background:#FAFCFE;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;color:var(--muted);padding:11px 18px;text-align:left;border-bottom:1px solid var(--border)}
+.obras-table tbody td{padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px}
+.obras-table tbody tr{transition:background .15s}
+.obras-table tbody tr:hover{background:var(--row-alt)}
+.obras-table tbody tr:last-child td{border-bottom:none}
+.obra-name{font-weight:600;color:var(--text)}
+.obra-client{font-size:11.5px;color:var(--muted);margin-top:3px}
+.obra-code{display:inline-block;background:var(--teal-light);color:var(--teal);padding:3px 9px;border-radius:4px;font-size:11.5px;font-weight:600;font-family:'Courier New',monospace;letter-spacing:.5px}
+.obra-code.off{background:var(--red-bg);color:var(--red);text-decoration:line-through}
+.obra-tasks{font-size:12px;color:var(--text);font-weight:500}
+.obra-tasks .muted{color:var(--muted);font-size:11px;font-weight:400}
+.row-actions{display:flex;gap:6px;justify-content:flex-end}
+.icon-action{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;color:var(--muted);transition:all .18s}
+.icon-action:hover{border-color:var(--navy);color:var(--navy);transform:translateY(-1px)}
+.icon-action.danger:hover{border-color:var(--red);color:var(--red)}
+
+.empty{padding:60px 22px;text-align:center;color:var(--muted)}
+.empty-icon{font-size:40px;margin-bottom:12px;opacity:.4}
+.empty-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.empty-sub{font-size:12px;line-height:1.5}
+
+/* Modal */
+.modal-backdrop{position:fixed;inset:0;background:rgba(10,20,35,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.modal-backdrop.show{display:flex;animation:fade .2s ease both}
+.modal{background:#fff;border-radius:12px;box-shadow:0 30px 90px rgba(0,0,0,.4);max-width:520px;width:100%;max-height:90vh;overflow:auto;animation:slideUp .3s cubic-bezier(.2,.7,.3,1) both}
+.modal-hdr{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:22px;cursor:pointer;width:28px;height:28px;border-radius:6px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--gray-bg);color:var(--text)}
+.modal-body{padding:22px 24px}
+.modal-ftr{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid.full{grid-template-columns:1fr}
+.field-help{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4}
+.field-help.err{color:var(--red);font-weight:500}
+.field-help.ok{color:var(--green);font-weight:500}
+.field-help.warn{color:var(--orange);font-weight:500}
+.field-help.err .code-chip,.field-help.ok .code-chip,.field-help.warn .code-chip{display:inline-block;padding:1px 6px;border-radius:3px;font-family:'Courier New',monospace;font-weight:600;margin:0 2px}
+.field-help.err .code-chip{background:var(--red-bg)}
+.field-help.ok .code-chip{background:var(--green-bg)}
+.field-help.warn .code-chip{background:var(--orange-bg)}
+.suggestion-btn{background:transparent;border:1px dashed currentColor;color:inherit;padding:1px 8px;margin-left:4px;border-radius:4px;font-size:10.5px;font-family:'Courier New',monospace;font-weight:600;cursor:pointer;transition:all .15s}
+.suggestion-btn:hover{background:rgba(26,122,154,.1)}
+
+/* Import preview */
+.import-preview{margin-top:14px;max-height:280px;overflow:auto;border:1px solid var(--border);border-radius:7px}
+.import-preview table{width:100%;border-collapse:collapse;font-size:11.5px}
+.import-preview thead th{position:sticky;top:0;background:var(--navy);color:#fff;padding:8px 10px;font-size:10px;letter-spacing:.8px;text-transform:uppercase;font-weight:600;text-align:left}
+.import-preview tbody td{padding:7px 10px;border-bottom:1px solid var(--border)}
+.import-preview tbody tr:nth-child(even){background:var(--row-alt)}
+.import-summary{font-size:12px;color:var(--text);margin-top:10px;padding:10px 12px;background:var(--green-bg);border-radius:6px;border-left:3px solid var(--green)}
+.import-summary.err{background:var(--red-bg);border-left-color:var(--red);color:var(--red)}
+
+/* Toast */
+.toast-stack{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{background:#fff;border-radius:10px;padding:13px 16px;min-width:260px;max-width:360px;box-shadow:0 12px 40px rgba(10,30,60,.22),0 2px 8px rgba(0,0,0,.08);display:flex;align-items:flex-start;gap:11px;animation:toastIn .35s cubic-bezier(.2,.7,.3,1);border-left:4px solid var(--green);pointer-events:auto}
+.toast.exit{animation:toastOut .3s ease forwards}
+.toast.info{border-left-color:var(--teal)}
+.toast.warn{border-left-color:var(--orange)}
+.toast.err{border-left-color:var(--red)}
+.toast-icon{width:28px;height:28px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.toast.info .toast-icon{background:var(--teal-light);color:var(--teal)}
+.toast.warn .toast-icon{background:var(--orange-bg);color:var(--orange)}
+.toast.err .toast-icon{background:var(--red-bg);color:var(--red)}
+.toast-body{flex:1;min-width:0}
+.toast-title{font-size:12px;font-weight:700;margin-bottom:2px}
+.toast-msg{font-size:11px;color:var(--muted);line-height:1.4}
+.toast-close{background:transparent;border:none;color:var(--muted);font-size:15px;cursor:pointer;padding:0;line-height:1}
+
+/* Drag & drop area */
+.drop-zone{border:2px dashed var(--border);border-radius:10px;padding:28px 20px;text-align:center;cursor:pointer;transition:all .2s;background:#FAFCFE}
+.drop-zone:hover,.drop-zone.drag{border-color:var(--teal);background:var(--teal-light)}
+.drop-zone-icon{font-size:34px;margin-bottom:8px;opacity:.6}
+.drop-zone-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.drop-zone-sub{font-size:11.5px;color:var(--muted)}
+.drop-zone-link{color:var(--teal);text-decoration:underline;cursor:pointer}
+
+.loading-overlay{position:fixed;inset:0;background:rgba(255,255,255,.7);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:5000}
+.loading-overlay.show{display:flex}
+.loading-box{background:#fff;border-radius:10px;padding:24px 30px;box-shadow:0 10px 40px rgba(0,0,0,.2);display:flex;align-items:center;gap:14px;font-size:13px;font-weight:500}
+.loading-box .spin{border-color:var(--border);border-top-color:var(--teal);width:18px;height:18px}
+
+@media (max-width:720px){
+  .form-grid{grid-template-columns:1fr}
+  .topbar-inner{padding:14px 18px}
+  .shell{padding:18px}
+  .search-input{width:160px}
+}
+
+/* ══════════════ EQUIPE (multi-tenant) ══════════════ */
+.equipe-card{background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 4px 14px rgba(10,30,60,.06)}
+.equipe-hdr{padding:18px 22px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.equipe-title{font-size:14px;font-weight:600}
+.equipe-sub{font-size:12px;color:var(--muted);margin-top:3px}
+.equipe-table{width:100%;border-collapse:collapse}
+.equipe-table thead th{background:#FAFCFE;font-size:10px;letter-spacing:1.2px;text-transform:uppercase;font-weight:600;color:var(--muted);padding:11px 18px;text-align:left;border-bottom:1px solid var(--border)}
+.equipe-table tbody td{padding:14px 18px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+.equipe-table tbody tr:last-child td{border-bottom:none}
+.equipe-name{font-weight:600;color:var(--text)}
+.equipe-email{color:var(--muted);font-size:12px;margin-top:2px}
+.role-badge{display:inline-block;padding:3px 10px;border-radius:11px;font-size:10.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
+.role-badge.owner{background:#FEF3E2;color:#8B4000}
+.role-badge.member{background:var(--teal-light);color:var(--teal)}
+.equipe-self{color:var(--muted);font-size:11px;font-style:italic}
+
+/* Onboarding (criar empresa) */
+.onboarding-screen{
+  position:fixed;inset:0;z-index:2000;
+  background:linear-gradient(135deg,var(--navy-dark),var(--navy) 60%,var(--navy-light));
+  display:none;align-items:center;justify-content:center;padding:24px;
+}
+.onboarding-screen.show{display:flex;animation:fade .4s ease both}
+.onboarding-card{
+  background:#fff;border-radius:14px;box-shadow:0 30px 90px rgba(0,0,0,.4);
+  width:100%;max-width:520px;padding:36px 36px 30px;animation:slideUp .5s cubic-bezier(.2,.7,.3,1) both;
+}
+.onboarding-icon{
+  width:60px;height:60px;border-radius:12px;
+  background:linear-gradient(135deg,var(--teal),var(--navy-light));
+  display:flex;align-items:center;justify-content:center;color:#fff;margin-bottom:18px;
+}
+.onboarding-title{font-size:22px;font-weight:600;margin-bottom:8px}
+.onboarding-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:24px}
+.onboarding-fields .form-field{margin-bottom:14px}
+.onboarding-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:8px}
+
+/* Membro modal */
+.member-help{font-size:12px;color:var(--muted);line-height:1.5;background:var(--teal-light);padding:11px 14px;border-radius:7px;border-left:3px solid var(--teal);margin-bottom:18px}
+.password-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:end}
+.password-row .gen-btn{padding:11px 14px;background:#fff;border:1px solid var(--border);border-radius:7px;font-size:12px;cursor:pointer;font-family:inherit;height:42px}
+.password-row .gen-btn:hover{border-color:var(--teal);color:var(--teal)}
+</style>
+</head>
+<body>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="login-screen" class="login-screen">
+  <div class="login-card">
+    <div class="login-top">
+      <div class="login-logo"><span class="logo-text" style="font-size:13px"><span>P</span><span class="lamp">&amp;</span><span>j</span></span></div>
+      <div class="login-brand">
+        <div class="login-brand-name"><span class="logo-text"><span>Plan</span><span class="lamp">&amp;</span><span>jar</span></span></div>
+        <div class="login-brand-tag">Painel da construtora</div>
+      </div>
+    </div>
+    <div class="login-body">
+      <div class="login-title">Acesso da construtora</div>
+      <div class="login-sub">Entre com seu email e senha para gerenciar suas obras e configurar a marca da empresa.</div>
+
+      <div class="form-field">
+        <label class="form-lbl" for="email">Email</label>
+        <input id="email" class="form-input" type="email" autocomplete="username" placeholder="nome@suaempresa.com.br">
+      </div>
+      <div class="form-field">
+        <label class="form-lbl" for="password">Senha</label>
+        <input id="password" class="form-input" type="password" autocomplete="current-password" placeholder="••••••••">
+      </div>
+
+      <div id="login-err" class="login-err"></div>
+
+      <button id="login-btn" class="login-btn">
+        <span id="login-btn-label">Entrar</span>
+      </button>
+
+      <a class="back-link" href="index.html">← Voltar para acesso do cliente</a>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADMIN PANEL ══════════════ -->
+<div id="admin" class="admin">
+
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="topbar-logo"><span class="logo-text" style="font-size:11px"><span>P</span><span class="lamp">&amp;</span><span>j</span></span></div>
+      <div class="topbar-brand">
+        <div class="topbar-name"><span class="logo-text"><span>Plan</span><span class="lamp">&amp;</span><span>jar</span></span></div>
+        <div class="topbar-tag">Painel da construtora</div>
+      </div>
+      <div class="topbar-spacer"></div>
+      <div class="topbar-user">Logado como <strong id="user-email">—</strong></div>
+      <button class="logout-btn" onclick="doLogout()">Sair</button>
+    </div>
+
+    <!-- Navegação principal -->
+    <div class="topbar-nav">
+      <div class="topbar-nav-inner">
+        <button class="adm-tab active" data-adm-tab="obras" onclick="switchAdmTab('obras')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
+          Obras
+        </button>
+        <button class="adm-tab" data-adm-tab="equipe" onclick="switchAdmTab('equipe')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+          Equipe
+        </button>
+        <button class="adm-tab" data-adm-tab="empresa" onclick="switchAdmTab('empresa')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .55.34 1.05.85 1.27.46.2.84.6.85 1.13"/></svg>
+          Minha empresa
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="shell">
+
+    <!-- ════════ ABA: OBRAS ════════ -->
+    <div class="adm-pane active" id="adm-pane-obras">
+      <div class="page-hdr">
+        <div>
+          <div class="page-title">Obras cadastradas</div>
+          <div class="page-sub">Gerencie obras, códigos de acesso e atividades do cronograma.</div>
+        </div>
+        <div class="actions">
+          <button class="btn-secondary" onclick="downloadModeloAtividades()" type="button">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Baixar modelo de planilha
+          </button>
+          <button class="btn-primary" onclick="openNewObraModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Nova obra
+          </button>
+        </div>
+      </div>
+
+      <div class="stats">
+        <div class="stat"><div class="stat-lbl">Total de obras</div><div class="stat-val" id="stat-total">0</div><div class="stat-hint">cadastradas no sistema</div></div>
+        <div class="stat"><div class="stat-lbl">Obras ativas</div><div class="stat-val" id="stat-active">0</div><div class="stat-hint">com código liberado</div></div>
+        <div class="stat"><div class="stat-lbl">Atividades totais</div><div class="stat-val" id="stat-tasks">0</div><div class="stat-hint">em todas as obras</div></div>
+      </div>
+
+      <div class="obras-card">
+        <div class="obras-hdr">
+          <div class="obras-title">Lista de obras</div>
+          <div class="search-wrap">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input id="search" class="search-input" placeholder="Buscar obra ou cliente…">
+          </div>
+        </div>
+        <div id="obras-body"></div>
+      </div>
+    </div>
+
+    <!-- ════════ ABA: EQUIPE ════════ -->
+    <div class="adm-pane" id="adm-pane-equipe">
+      <div class="page-hdr">
+        <div>
+          <div class="page-title">Equipe da construtora</div>
+          <div class="page-sub">Cadastre os usuários da sua empresa. Todos veem as mesmas obras e a mesma marca.</div>
+        </div>
+        <div class="actions">
+          <button class="btn-primary" onclick="openMemberModal()" id="btn-new-member">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Novo usuário
+          </button>
+        </div>
+      </div>
+
+      <div class="equipe-card">
+        <div class="equipe-hdr">
+          <div>
+            <div class="equipe-title" id="equipe-company-name">Construtora</div>
+            <div class="equipe-sub" id="equipe-company-info">—</div>
+          </div>
+        </div>
+        <table class="equipe-table">
+          <thead>
+            <tr>
+              <th>Usuário</th>
+              <th>Função</th>
+              <th>Adicionado em</th>
+              <th style="text-align:right">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="equipe-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ════════ ABA: MINHA EMPRESA ════════ -->
+    <div class="adm-pane" id="adm-pane-empresa">
+      <div class="page-hdr">
+        <div>
+          <div class="page-title">Minha empresa</div>
+          <div class="page-sub">Personalize a marca que aparece na tela do cliente. Cada obra herda essa configuração — você pode sobrescrever individualmente nos detalhes da obra.</div>
+        </div>
+      </div>
+
+      <div class="empresa-grid">
+        <!-- Coluna de preview -->
+        <div class="preview-col">
+          <div class="preview-card">
+            <div class="preview-bar"></div>
+            <div class="preview-hdr">
+              <div class="preview-logo" id="prev-logo">P</div>
+              <div class="preview-text">
+                <span class="preview-name" id="prev-name"><span class="logo-text"><span>Plan</span><span class="lamp">&amp;</span><span>jar</span></span></span>
+                <span class="preview-tag" id="prev-tag">Construa com clareza</span>
+              </div>
+            </div>
+            <div class="preview-body">
+              <div class="preview-mini-row">
+                <span style="flex:1;font-weight:500">Fundação</span>
+                <span class="preview-pill">Em andamento</span>
+              </div>
+              <div class="preview-mini-row">
+                <div class="preview-bar-mini"><div class="preview-bar-mini-fill" style="width:65%"></div></div>
+              </div>
+              <div class="preview-mini-row">
+                <span style="flex:1;font-weight:500">Estrutura</span>
+                <span class="preview-pill" style="background:#F1F4F8;color:#5A6E7F">Pendente</span>
+              </div>
+              <div class="preview-mini-row">
+                <div class="preview-bar-mini"><div class="preview-bar-mini-fill" style="width:15%;opacity:.5"></div></div>
+              </div>
+              <div class="preview-info">↑ Prévia de como ficará a tela de acompanhamento da obra do seu cliente</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Coluna de formulário -->
+        <div>
+          <!-- Identidade visual -->
+          <div class="empresa-form-card">
+            <div class="empresa-form-title">🏢 Identidade visual</div>
+            <div class="empresa-form-sub">Nome e descrição que serão exibidos no topo da página da obra para seus clientes.</div>
+
+            <div class="form-grid">
+              <div>
+                <label class="form-lbl">Nome da empresa</label>
+                <input id="emp-nome" class="form-input" placeholder="Ex: Tailored Engenharia" oninput="updateEmpresaPreview()">
+              </div>
+              <div>
+                <label class="form-lbl">Slogan / linha curta</label>
+                <input id="emp-slogan" class="form-input" placeholder="Ex: Engenharia Personalizada" oninput="updateEmpresaPreview()">
+              </div>
+            </div>
+          </div>
+
+          <!-- Logo -->
+          <div class="empresa-form-card">
+            <div class="empresa-form-title">🎨 Logo</div>
+            <div class="empresa-form-sub">Envie um PNG ou SVG. O sistema redimensiona e armazena dentro do próprio cadastro — sem depender de Firebase Storage. Se não enviar logo, aparece a inicial do nome da empresa em um quadrado colorido.</div>
+
+            <div class="logo-upload">
+              <div class="logo-preview" id="logo-prev">P</div>
+              <div class="logo-actions">
+                <input type="file" id="emp-logo-file" accept="image/png,image/jpeg,image/svg+xml,image/webp">
+                <label for="emp-logo-file" class="upload-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                  Fazer upload de logo
+                </label>
+                <button class="upload-btn" onclick="removeLogo()" id="btn-remove-logo" style="display:none">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                  Remover logo
+                </button>
+                <div class="upload-info">PNG/SVG transparente recomendado · Aceita até 4 MB (sistema redimensiona) · Quadrado funciona melhor</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cores -->
+          <div class="empresa-form-card">
+            <div class="empresa-form-title">🎨 Cor da marca</div>
+            <div class="empresa-form-sub">A cor primária aparece nas barras de progresso, botões e detalhes da tela do cliente. Escolha uma das cores ou clique no último quadrado pra usar uma cor personalizada.</div>
+
+            <div>
+              <label class="form-lbl">Cor primária</label>
+              <div class="color-picker" id="cor-primaria">
+                <span class="color-swatch" data-color="#1A7A9A" style="background:#1A7A9A"></span>
+                <span class="color-swatch" data-color="#1A8A55" style="background:#1A8A55"></span>
+                <span class="color-swatch" data-color="#C05A00" style="background:#C05A00"></span>
+                <span class="color-swatch" data-color="#5E3FA0" style="background:#5E3FA0"></span>
+                <span class="color-swatch" data-color="#234959" style="background:#234959"></span>
+                <span class="color-swatch" data-color="#7A2A6B" style="background:#7A2A6B"></span>
+                <span class="color-swatch" data-color="#0E4A2E" style="background:#0E4A2E"></span>
+                <span class="color-swatch" data-color="#B07010" style="background:#B07010"></span>
+                <span class="color-swatch" data-color="#2A4E7A" style="background:#2A4E7A"></span>
+                <span class="color-swatch custom" title="Cor personalizada">+
+                  <input type="color" id="emp-cor-custom" value="#1A7A9A">
+                </span>
+              </div>
+            </div>
+
+            <div style="margin-top:18px">
+              <label class="form-lbl">Cor secundária (gradiente)</label>
+              <div class="color-picker" id="cor-secundaria">
+                <span class="color-swatch" data-color="#2A5580" style="background:#2A5580"></span>
+                <span class="color-swatch" data-color="#1C3D5A" style="background:#1C3D5A"></span>
+                <span class="color-swatch" data-color="#122738" style="background:#122738"></span>
+                <span class="color-swatch" data-color="#3A6FB0" style="background:#3A6FB0"></span>
+                <span class="color-swatch" data-color="#4A2080" style="background:#4A2080"></span>
+                <span class="color-swatch" data-color="#553311" style="background:#553311"></span>
+                <span class="color-swatch custom" title="Cor personalizada">+
+                  <input type="color" id="emp-cor2-custom" value="#2A5580">
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Ações -->
+          <div class="empresa-actions">
+            <div class="save-status" id="emp-save-status"><span class="dot"></span><span id="emp-save-lbl">—</span></div>
+            <button class="btn-secondary" onclick="resetEmpresa()">Restaurar padrão</button>
+            <button class="btn-primary" onclick="saveEmpresa()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+              Salvar configurações
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══════════════ NEW/EDIT OBRA MODAL ══════════════ -->
+<div id="obra-modal" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="obra-modal-title">Nova obra</div>
+      <button class="modal-close" onclick="closeObraModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div>
+          <label class="form-lbl">Nome da obra *</label>
+          <input id="f-nome" class="form-input" placeholder="Ex: Residência Vila Nova">
+        </div>
+        <div>
+          <label class="form-lbl">Cliente *</label>
+          <input id="f-cliente" class="form-input" placeholder="Ex: João da Silva">
+        </div>
+        <div>
+          <label class="form-lbl">Código de acesso *</label>
+          <input id="f-code" class="form-input" placeholder="Ex: OBRA-001" style="text-transform:uppercase;font-weight:600;letter-spacing:1px" autocomplete="off">
+          <div class="field-help" id="f-code-help">Curto, memorável, ex: OBRA-001, CASA-VN.</div>
+        </div>
+        <div>
+          <label class="form-lbl">Status</label>
+          <select id="f-ativo" class="form-input">
+            <option value="true">Ativo (código liberado)</option>
+            <option value="false">Desativado</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-lbl">Data início cronograma</label>
+          <input id="f-start" class="form-input" type="date">
+          <div class="field-help">Primeiro dia exibido no Gantt.</div>
+        </div>
+        <div>
+          <label class="form-lbl">Data fim cronograma</label>
+          <input id="f-end" class="form-input" type="date">
+          <div class="field-help">Último dia exibido no Gantt.</div>
+        </div>
+      </div>
+      <div style="margin-top:14px">
+        <label class="form-lbl">Subtítulo (opcional)</label>
+        <input id="f-sub" class="form-input" placeholder="Ex: Rua das Flores, 123 · POA · 2026">
+      </div>
+
+      <!-- Personalização por obra (override do branding da empresa) -->
+      <div class="obra-branding-section">
+        <div class="obra-branding-toggle" onclick="toggleObraBranding()" id="obra-branding-toggle">
+          <span class="chev">▸</span>
+          <span style="flex:1"><strong>Personalização desta obra</strong> <span class="obra-branding-hint">— sobrescreve a marca da empresa só para este cliente</span></span>
+        </div>
+        <div class="obra-branding-body" id="obra-branding-body" style="display:none">
+          <div class="field-help" style="margin-bottom:14px">Deixe em branco para usar a configuração da sua empresa. Preencha apenas se quiser que <em>esta obra específica</em> apareça com nome ou cor diferente para o cliente (ex: parceria, marca branca).</div>
+          <div class="form-grid">
+            <div>
+              <label class="form-lbl">Nome da empresa (override)</label>
+              <input id="f-brand-name" class="form-input" placeholder="(usar configuração padrão)">
+            </div>
+            <div>
+              <label class="form-lbl">Slogan (override)</label>
+              <input id="f-brand-tag" class="form-input" placeholder="(usar configuração padrão)">
+            </div>
+            <div>
+              <label class="form-lbl">Cor primária (override)</label>
+              <div style="display:flex;align-items:center;gap:10px">
+                <input type="color" id="f-brand-color" class="form-input" style="width:60px;padding:4px;height:40px" value="#1A7A9A">
+                <button class="upload-btn" onclick="document.getElementById('f-brand-color').value='';document.getElementById('f-brand-color2').value='';" type="button">Limpar override</button>
+              </div>
+            </div>
+            <div>
+              <label class="form-lbl">Cor secundária (override)</label>
+              <input type="color" id="f-brand-color2" class="form-input" style="width:60px;padding:4px;height:40px" value="#2A5580">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-secondary" onclick="closeObraModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveObra()" id="save-obra-btn">Salvar obra</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ IMPORT MODAL ══════════════ -->
+<div id="import-modal" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">Importar atividades</div>
+      <button class="modal-close" onclick="closeImportModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:12.5px;color:var(--muted);margin-bottom:14px;line-height:1.5">
+        Obra: <strong id="import-obra-name" style="color:var(--text)"></strong><br>
+        Importe um arquivo <strong>.xlsx</strong> com a lista de atividades. As atividades atuais desta obra serão substituídas — o progresso (status) é preservado para os IDs que continuarem existindo.
+      </div>
+
+      <div style="background:var(--teal-light);border-left:3px solid var(--teal);padding:11px 14px;border-radius:7px;margin-bottom:14px;font-size:11.5px;line-height:1.55;color:var(--text)">
+        <strong>O que o sistema faz sozinho na importação:</strong><br>
+        ✓ Identifica <strong>Projeto</strong> ou <strong>Obra</strong> automaticamente pelo nome/departamento (você só precisa informar se quiser sobrescrever)<br>
+        ✓ Calcula o <strong>caminho crítico</strong> com base nas datas (cadeia sem folga)<br>
+        ✓ Gera IDs faltantes, completa os dias e valida sobreposições<br>
+        ✓ Mantém o status das atividades cujos IDs continuarem existindo
+      </div>
+
+      <div id="drop-zone" class="drop-zone">
+        <div class="drop-zone-icon">📊</div>
+        <div class="drop-zone-title">Arraste a planilha aqui</div>
+        <div class="drop-zone-sub">ou <span class="drop-zone-link">clique para selecionar</span> · Aceita .xlsx e .xls</div>
+        <input type="file" id="file-input" accept=".xlsx,.xls" style="display:none">
+      </div>
+
+      <div id="import-result"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-secondary" onclick="closeImportModal()">Cancelar</button>
+      <button class="btn-primary" id="confirm-import-btn" onclick="confirmImport()" style="display:none">Confirmar importação</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ONBOARDING (criar empresa no 1º login) ══════════════ -->
+<div id="onboarding" class="onboarding-screen">
+  <div class="onboarding-card">
+    <div class="onboarding-icon">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4"/></svg>
+    </div>
+    <div class="onboarding-title">Vamos criar sua construtora</div>
+    <div class="onboarding-sub">
+      Cada construtora tem seu próprio painel — obras, equipe e marca compartilhados entre todos os usuários da empresa. Você é o primeiro, então será o <strong>dono (owner)</strong> e poderá adicionar outros usuários depois.
+    </div>
+    <div class="onboarding-fields">
+      <div class="form-field">
+        <label class="form-lbl" for="ob-company-name">Nome da construtora *</label>
+        <input id="ob-company-name" class="form-input" placeholder="Ex: Tailored Engenharia" autocomplete="organization">
+      </div>
+      <div class="form-field">
+        <label class="form-lbl" for="ob-display-name">Seu nome (para identificação na equipe)</label>
+        <input id="ob-display-name" class="form-input" placeholder="Ex: Leonardo Teles" autocomplete="name">
+      </div>
+      <div id="ob-err" class="login-err"></div>
+    </div>
+    <div class="onboarding-actions">
+      <button class="btn-secondary" onclick="doLogout()">Sair</button>
+      <button class="btn-primary" id="ob-create-btn" onclick="createCompany()">
+        Criar construtora
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ NEW MEMBER MODAL ══════════════ -->
+<div id="member-modal" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title">Cadastrar usuário da equipe</div>
+      <button class="modal-close" onclick="closeMemberModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="member-help">
+        Você está criando um login direto para um funcionário da sua construtora. Ele(a) vai receber acesso ao painel com a senha que você definir aqui — passe pra ele(a) por um canal seguro. O usuário pode trocar a senha depois pelo Firebase (em uma versão futura, vamos abrir essa tela aqui).
+      </div>
+
+      <div class="form-grid">
+        <div>
+          <label class="form-lbl">Email *</label>
+          <input id="m-email" class="form-input" type="email" autocomplete="off" placeholder="exemplo@sua-empresa.com.br">
+        </div>
+        <div>
+          <label class="form-lbl">Nome para exibição</label>
+          <input id="m-name" class="form-input" placeholder="Ex: João Silva">
+        </div>
+      </div>
+      <div class="form-field" style="margin-top:14px">
+        <label class="form-lbl">Senha temporária *</label>
+        <div class="password-row">
+          <input id="m-pass" class="form-input" type="text" autocomplete="off" placeholder="Mínimo 6 caracteres">
+          <button class="gen-btn" type="button" onclick="generatePassword()">Gerar</button>
+        </div>
+        <div class="field-help">Mínimo 6 caracteres. O Firebase aceita qualquer combinação; recomende ao usuário trocar no primeiro acesso.</div>
+      </div>
+      <div id="m-err" class="login-err"></div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-secondary" onclick="closeMemberModal()">Cancelar</button>
+      <button class="btn-primary" id="save-member-btn" onclick="saveMember()">Cadastrar usuário</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div id="toast-stack" class="toast-stack"></div>
+
+<!-- Loading -->
+<div id="loading" class="loading-overlay">
+  <div class="loading-box"><span class="spin"></span><span id="loading-text">Carregando…</span></div>
+</div>
+
+<!-- ══════════════ FIREBASE ══════════════ -->
+<script type="module">
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBJoDou1VsHAIAbVjESOGVh23dezmLETrE",
+  authDomain: "franco-e-fragoso-advocacia.firebaseapp.com",
+  databaseURL: "https://franco-e-fragoso-advocacia-default-rtdb.firebaseio.com",
+  projectId: "franco-e-fragoso-advocacia",
+  storageBucket: "franco-e-fragoso-advocacia.firebasestorage.app",
+  messagingSenderId: "1096895063248",
+  appId: "1:1096895063248:web:68a5c866e229124f3faad5"
+};
+
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, createUserWithEmailAndPassword } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+import { getDatabase, ref, onValue, set, update, remove, get, push, child } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+import { getStorage, ref as sRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+
+const app = initializeApp(FIREBASE_CONFIG);
+const auth = getAuth(app);
+const db = getDatabase(app);
+const storage = getStorage(app);
+
+// Instância secundária — usada APENAS para criar usuários da equipe sem
+// deslogar o admin. createUserWithEmailAndPassword no SDK cliente troca o
+// usuário ativo do app principal; usar uma 2ª app evita esse efeito colateral.
+const secondaryApp = initializeApp(FIREBASE_CONFIG, 'secondary');
+const secondaryAuth = getAuth(secondaryApp);
+
+window.__FB__ = { auth, db, storage, ref, onValue, set, update, remove, get, push, child,
+  sRef, uploadBytes, getDownloadURL, deleteObject,
+  signInWithEmailAndPassword: (e, p) => signInWithEmailAndPassword(auth, e, p),
+  signOut: () => signOut(auth),
+  onAuthStateChanged: (cb) => onAuthStateChanged(auth, cb),
+  // Para cadastro de membros: usa a app secundária pra não deslogar o admin
+  createUserSecondary: async (e, p) => {
+    const cred = await createUserWithEmailAndPassword(secondaryAuth, e, p);
+    // Solta a sessão da app secundária imediatamente — só precisamos do uid
+    try { await signOut(secondaryAuth); } catch(_) {}
+    return cred.user;
+  }
+};
+window.dispatchEvent(new CustomEvent('fb-ready'));
+</script>
+
+<script>
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+let fb = null;
+let currentUser = null;
+let currentCompanyId = null;     // construtora do usuário logado
+let currentCompany = null;       // { name, branding, ownerUid, ... }
+let currentUserProfile = null;   // { companyId, role, displayName, ... }
+let companyMembers = {};         // { uid: { email, displayName, role, addedAt } }
+let obras = {};            // { obraId: {...} }
+let codes = {};            // { CODE: { obraId, ativo } }
+let tasksCount = {};       // { obraId: number }
+let editingObraId = null;
+let importObraId = null;
+let pendingImport = null;  // { tasks: [...] }
+
+/* ═══════════════════════════════════════════
+   HELPERS
+═══════════════════════════════════════════ */
+function $(id) { return document.getElementById(id); }
+function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function normalizeCode(s) { return (s||'').trim().toUpperCase().replace(/\s+/g,''); }
+
+function showLoading(text) { $('loading-text').textContent = text || 'Carregando…'; $('loading').classList.add('show'); }
+function hideLoading() { $('loading').classList.remove('show'); }
+
+function toast({title, msg, kind='success', duration=3800}) {
+  const stack = $('toast-stack');
+  const el = document.createElement('div');
+  el.className = 'toast ' + (kind==='info'?'info':kind==='warn'?'warn':kind==='err'?'err':'');
+  const ic = kind==='success'?'✓':kind==='info'?'ℹ':kind==='err'?'✕':'!';
+  el.innerHTML = `
+    <div class="toast-icon">${ic}</div>
+    <div class="toast-body">
+      <div class="toast-title">${esc(title||'')}</div>
+      ${msg?`<div class="toast-msg">${esc(msg)}</div>`:''}
+    </div>
+    <button class="toast-close">×</button>
+  `;
+  stack.appendChild(el);
+  const close = () => { el.classList.add('exit'); setTimeout(()=>el.remove(), 320); };
+  el.querySelector('.toast-close').addEventListener('click', close);
+  setTimeout(close, duration);
+}
+
+/* ═══════════════════════════════════════════
+   AUTH + COMPANY BOOTSTRAP
+═══════════════════════════════════════════ */
+window.addEventListener('fb-ready', () => {
+  fb = window.__FB__;
+  fb.onAuthStateChanged(async user => {
+    if (user) {
+      currentUser = user;
+      $('user-email').textContent = user.email;
+      $('login-screen').style.display = 'none';
+      // Esconde o painel até saber a empresa do usuário
+      $('admin').classList.remove('active');
+      $('onboarding').classList.remove('show');
+      showLoading('Carregando seu painel…');
+
+      try {
+        // 1) Migração one-shot da Tailored (idempotente)
+        await runTailoredMigrationIfNeeded(user);
+
+        // 2) Carrega o perfil do usuário
+        const profileSnap = await fb.get(fb.ref(fb.db, `users/${user.uid}`));
+        currentUserProfile = profileSnap.val();
+
+        if (currentUserProfile && currentUserProfile.companyId) {
+          // Usuário pertence a uma construtora — carrega a empresa
+          currentCompanyId = currentUserProfile.companyId;
+          await loadCurrentCompany();
+          hideLoading();
+          $('admin').classList.add('active');
+          subscribeData();
+        } else {
+          // Primeiro login: oferece criar a construtora
+          hideLoading();
+          $('onboarding').classList.add('show');
+        }
+      } catch(e) {
+        console.error('[bootstrap]', e);
+        hideLoading();
+        toast({title:'Erro ao carregar painel', msg:e.message, kind:'err', duration:8000});
+      }
+    } else {
+      currentUser = null;
+      currentCompanyId = null;
+      currentCompany = null;
+      currentUserProfile = null;
+      $('login-screen').style.display = 'flex';
+      $('admin').classList.remove('active');
+      $('onboarding').classList.remove('show');
+    }
+  });
+
+  $('login-btn').addEventListener('click', doLogin);
+  $('password').addEventListener('keydown', e => { if (e.key==='Enter') doLogin(); });
+  $('email').addEventListener('keydown', e => { if (e.key==='Enter') $('password').focus(); });
+});
+
+/* ═══════════════════════════════════════════
+   MIGRAÇÃO ONE-SHOT: TAILORED
+   Cria a empresa "tailored" se não existir, atribui leonardo.teles@tailored.eng.br
+   como owner, atrela a única obra existente e migra branding.
+═══════════════════════════════════════════ */
+async function runTailoredMigrationIfNeeded(user) {
+  // Roda apenas uma vez por instalação. Marcador em meta/migrationDone/tailored_v1.
+  try {
+    const flagSnap = await fb.get(fb.ref(fb.db, 'meta/migrationDone/tailored_v1'));
+    if (flagSnap.val()) return; // já rodou
+  } catch(e) {
+    // se a leitura falhou, presumimos que a flag não existe e tentamos rodar
+    console.warn('[migration] falha ao ler flag, tentando migrar:', e.message);
+  }
+
+  // Só faz sentido migrar quando o usuário logado é o Leonardo
+  if ((user.email || '').toLowerCase() !== 'leonardo.teles@tailored.eng.br') return;
+
+  console.log('[migration] iniciando migração Tailored…');
+  const COMPANY_ID = 'tailored';
+  const updates = {};
+
+  // 1) Lê tudo que precisa (em paralelo, ignorando erros isolados)
+  const [companySnap, oldBrandingSnap, obrasSnap, userProfileSnap] = await Promise.all([
+    fb.get(fb.ref(fb.db, `companies/${COMPANY_ID}`)).catch(() => null),
+    fb.get(fb.ref(fb.db, `settings/users/${user.uid}/branding`)).catch(() => null),
+    fb.get(fb.ref(fb.db, 'obras')).catch(() => null),
+    fb.get(fb.ref(fb.db, `users/${user.uid}`)).catch(() => null),
+  ]);
+
+  // 2) Cria a empresa Tailored (se ainda não existe)
+  if (!companySnap || !companySnap.val()) {
+    const oldBranding = (oldBrandingSnap && oldBrandingSnap.val()) || {};
+    updates[`companies/${COMPANY_ID}`] = {
+      name: oldBranding.companyName || 'Tailored Engenharia',
+      ownerUid: user.uid,
+      branding: {
+        companyName: oldBranding.companyName || 'Tailored Engenharia',
+        companyTag: oldBranding.companyTag || 'Excelência em cada detalhe',
+        primaryColor: oldBranding.primaryColor || '#1A7A9A',
+        secondaryColor: oldBranding.secondaryColor || '#2A5580',
+        logoUrl: oldBranding.logoUrl || null,
+        logoPath: oldBranding.logoPath || null,
+      },
+      createdAt: Date.now(),
+    };
+  }
+
+  // 3) Cria/atualiza o perfil do Leonardo como owner
+  if (!userProfileSnap || !userProfileSnap.val() || !userProfileSnap.val().companyId) {
+    updates[`users/${user.uid}`] = {
+      companyId: COMPANY_ID,
+      role: 'owner',
+      email: user.email,
+      displayName: 'Leonardo Teles',
+      addedAt: Date.now(),
+    };
+  }
+
+  // 4) Atrela toda obra existente sem companyId à construtora Tailored
+  const allObras = (obrasSnap && obrasSnap.val()) || {};
+  Object.entries(allObras).forEach(([obraId, o]) => {
+    if (!o.companyId) {
+      updates[`obras/${obraId}/companyId`] = COMPANY_ID;
+    }
+  });
+
+  // 5) Marca a migração como concluída
+  updates['meta/migrationDone/tailored_v1'] = { at: Date.now(), by: user.uid };
+
+  // Aplica tudo de uma vez
+  if (Object.keys(updates).length > 0) {
+    try {
+      await fb.update(fb.ref(fb.db), updates);
+      console.log('[migration] Tailored migrado com sucesso:', Object.keys(updates));
+    } catch(e) {
+      console.error('[migration] falhou:', e);
+      // Não bloqueia o login — só loga
+    }
+  }
+}
+
+async function loadCurrentCompany() {
+  if (!currentCompanyId) return;
+  const snap = await fb.get(fb.ref(fb.db, `companies/${currentCompanyId}`));
+  currentCompany = snap.val() || null;
+  if (!currentCompany) {
+    // Estado inconsistente: o usuário aponta pra uma empresa que sumiu
+    throw new Error('Construtora não encontrada. Avise o suporte.');
+  }
+}
+
+async function doLogin() {
+  const email = $('email').value.trim();
+  const pass  = $('password').value;
+  const err   = $('login-err');
+  err.classList.remove('show');
+
+  if (!email || !pass) {
+    err.textContent = 'Preencha email e senha.';
+    err.classList.add('show');
+    return;
+  }
+  const btn = $('login-btn');
+  btn.disabled = true;
+  $('login-btn-label').innerHTML = '<span class="spin"></span>&nbsp;Entrando…';
+
+  try {
+    await fb.signInWithEmailAndPassword(email, pass);
+  } catch(e) {
+    let msg = 'Falha no login.';
+    const code = e.code || '';
+    if (code.includes('invalid-credential') || code.includes('wrong-password') || code.includes('user-not-found')) {
+      msg = 'Email ou senha incorretos.';
+    } else if (code.includes('too-many-requests')) {
+      msg = 'Muitas tentativas. Tente novamente em alguns minutos.';
+    } else if (code.includes('network')) {
+      msg = 'Sem conexão com o servidor.';
+    } else if (code.includes('operation-not-allowed')) {
+      msg = 'Login por email/senha não está habilitado no Firebase. Vá em Authentication → Sign-in method e ative.';
+    }
+    err.textContent = msg;
+    err.classList.add('show');
+    btn.disabled = false;
+    $('login-btn-label').textContent = 'Entrar';
+  }
+}
+
+async function doLogout() {
+  if (!confirm('Sair do painel administrativo?')) return;
+  await fb.signOut();
+}
+window.doLogout = doLogout;
+
+/* ═══════════════════════════════════════════
+   DATA SUBSCRIPTIONS
+═══════════════════════════════════════════ */
+function subscribeData() {
+  if (!currentCompanyId) return;
+
+  // obras: lê todas e filtra por companyId
+  fb.onValue(fb.ref(fb.db, 'obras'), snap => {
+    const all = snap.val() || {};
+    obras = {};
+    Object.entries(all).forEach(([id, o]) => {
+      if (o && o.companyId === currentCompanyId) obras[id] = o;
+    });
+    renderObras();
+  }, err => {
+    console.error('[obras]', err);
+    toast({title:'Erro ao ler obras', msg:err.message, kind:'err', duration:6000});
+  });
+
+  // codes: lê todos (apenas para validar duplicatas; render filtra pelos obras visíveis)
+  fb.onValue(fb.ref(fb.db, 'codes'), snap => {
+    codes = snap.val() || {};
+    renderObras();
+  });
+
+  // tasks count
+  fb.onValue(fb.ref(fb.db, 'tasks'), snap => {
+    const all = snap.val() || {};
+    tasksCount = {};
+    Object.keys(all).forEach(obraId => {
+      const node = all[obraId];
+      tasksCount[obraId] = node && node.definition ? Object.keys(node.definition).length : 0;
+    });
+    renderObras();
+  });
+
+  // membros da construtora
+  fb.onValue(fb.ref(fb.db, 'users'), snap => {
+    const all = snap.val() || {};
+    companyMembers = {};
+    Object.entries(all).forEach(([uid, u]) => {
+      if (u && u.companyId === currentCompanyId) companyMembers[uid] = u;
+    });
+    renderEquipe();
+  }, err => {
+    console.warn('[users]', err);
+  });
+
+  // Recarrega a empresa em tempo real (pra refletir branding mudado em outra aba)
+  fb.onValue(fb.ref(fb.db, `companies/${currentCompanyId}`), snap => {
+    currentCompany = snap.val() || currentCompany;
+    renderEquipe();
+    // Se a aba "Empresa" estiver aberta e ainda não preencheu, sincroniza
+    fillEmpresaFormFromCompany();
+  });
+}
+
+/* ═══════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════ */
+function renderObras() {
+  const body = $('obras-body');
+  const q = ($('search').value || '').toLowerCase().trim();
+
+  const list = Object.entries(obras)
+    .map(([id, o]) => ({ id, ...o }))
+    .filter(o => {
+      if (!q) return true;
+      return (o.nome||'').toLowerCase().includes(q) ||
+             (o.cliente||'').toLowerCase().includes(q) ||
+             (o.code||'').toLowerCase().includes(q);
+    })
+    .sort((a,b) => (a.nome||'').localeCompare(b.nome||''));
+
+  // Stats
+  const total = Object.keys(obras).length;
+  const active = Object.values(codes).filter(c => c && c.ativo !== false).length;
+  const tasksAll = Object.values(tasksCount).reduce((a,b)=>a+b, 0);
+  $('stat-total').textContent = total;
+  $('stat-active').textContent = active;
+  $('stat-tasks').textContent = tasksAll;
+
+  if (list.length === 0) {
+    if (total === 0) {
+      body.innerHTML = `
+        <div class="empty">
+          <div class="empty-icon">🏗</div>
+          <div class="empty-title">Nenhuma obra cadastrada</div>
+          <div class="empty-sub">Clique em <strong>"Nova obra"</strong> no topo pra começar.</div>
+        </div>`;
+    } else {
+      body.innerHTML = `<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">Nenhum resultado</div><div class="empty-sub">Tente outra busca.</div></div>`;
+    }
+    return;
+  }
+
+  let html = `<table class="obras-table"><thead><tr>
+    <th style="width:32%">Obra / Cliente</th>
+    <th>Código</th>
+    <th>Atividades</th>
+    <th>Período</th>
+    <th style="text-align:right">Ações</th>
+  </tr></thead><tbody>`;
+
+  list.forEach(o => {
+    const codeInfo = codes[o.code];
+    const ativo = codeInfo ? codeInfo.ativo !== false : false;
+    const nTasks = tasksCount[o.id] || 0;
+    const periodo = (o.start && o.end)
+      ? `${fmtDateBr(o.start)} — ${fmtDateBr(o.end)}`
+      : '<span style="color:var(--muted);font-size:11px">Não definido</span>';
+
+    html += `<tr>
+      <td>
+        <div class="obra-name">${esc(o.nome||'—')}</div>
+        <div class="obra-client">${esc(o.cliente||'')}</div>
+      </td>
+      <td><span class="obra-code ${ativo?'':'off'}">${esc(o.code||'')}</span></td>
+      <td><div class="obra-tasks">${nTasks}<span class="muted"> atividades</span></div></td>
+      <td style="font-size:11.5px;color:var(--muted)">${periodo}</td>
+      <td>
+        <div class="row-actions">
+          <button class="icon-action" title="Ver obra" onclick="openObra('${o.id}','${esc(o.code)}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          </button>
+          <button class="icon-action" title="Importar planilha" onclick="openImportModal('${o.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          </button>
+          <button class="icon-action" title="Editar" onclick="openEditObraModal('${o.id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+          </button>
+          <button class="icon-action danger" title="Excluir" onclick="deleteObra('${o.id}','${esc(o.code)}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+          </button>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  html += '</tbody></table>';
+  body.innerHTML = html;
+}
+
+function fmtDateBr(iso) {
+  if (!iso) return '';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+$('#search'); // no-op
+document.getElementById('search').addEventListener('input', renderObras);
+
+/* ═══════════════════════════════════════════
+   CREATE / EDIT OBRA
+═══════════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   CODE VALIDATION (tempo real)
+═══════════════════════════════════════════ */
+function checkCodeAvailability() {
+  const input = $('f-code');
+  const help = $('f-code-help');
+  const saveBtn = $('save-obra-btn');
+  const raw = input.value;
+  const code = normalizeCode(raw);
+
+  // Reseta classes do help
+  help.className = 'field-help';
+
+  // Vazio — estado neutro
+  if (!code) {
+    help.textContent = 'Curto, memorável, ex: OBRA-001, CASA-VN.';
+    saveBtn.disabled = false;
+    return true;
+  }
+
+  // Formato inválido
+  if (!/^[A-Z0-9\-]{2,20}$/.test(code)) {
+    help.classList.add('err');
+    help.innerHTML = '⚠ Use só letras, números e hífen (2–20 caracteres).';
+    saveBtn.disabled = true;
+    return false;
+  }
+
+  const existing = codes[code];
+  const isOwnCode = editingObraId && existing && existing.obraId === editingObraId;
+
+  if (existing && !isOwnCode) {
+    // Código em uso por outra obra — sugere alternativas livres
+    const suggestions = generateSuggestions(code).slice(0, 3);
+    const chips = suggestions.map(s =>
+      `<button type="button" class="suggestion-btn" onclick="applyCodeSuggestion('${s}')">${s}</button>`
+    ).join('');
+    help.classList.add('err');
+    help.innerHTML = `⚠ Código <span class="code-chip">${esc(code)}</span> já está em uso. Sugestões: ${chips}`;
+    saveBtn.disabled = true;
+    return false;
+  }
+
+  // Disponível
+  help.classList.add('ok');
+  help.innerHTML = `✓ Código <span class="code-chip">${esc(code)}</span> disponível.`;
+  saveBtn.disabled = false;
+  return true;
+}
+
+function generateSuggestions(base) {
+  const results = [];
+  // 1) Sufixo numérico: CODIGO → CODIGO-2, CODIGO-3…
+  for (let i = 2; i <= 9; i++) {
+    const c = base + '-' + i;
+    if (!codes[c] && c.length <= 20) results.push(c);
+    if (results.length >= 5) break;
+  }
+  // 2) Sufixo letra: CODIGO → CODIGOA, CODIGOB…
+  for (const L of ['A','B','C','D','E']) {
+    const c = base + L;
+    if (!codes[c] && c.length <= 20) results.push(c);
+    if (results.length >= 8) break;
+  }
+  return [...new Set(results)];
+}
+
+function applyCodeSuggestion(code) {
+  $('f-code').value = code;
+  checkCodeAvailability();
+  $('f-code').focus();
+}
+window.applyCodeSuggestion = applyCodeSuggestion;
+
+// Instala o listener uma vez
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('f-code');
+  if (input) {
+    input.addEventListener('input', checkCodeAvailability);
+    input.addEventListener('blur', checkCodeAvailability);
+  }
+});
+
+function openNewObraModal() {
+  editingObraId = null;
+  $('obra-modal-title').textContent = 'Nova obra';
+  $('f-nome').value = '';
+  $('f-cliente').value = '';
+  $('f-code').value = '';
+  $('f-ativo').value = 'true';
+  $('f-start').value = '';
+  $('f-end').value = '';
+  $('f-sub').value = '';
+  $('f-brand-name').value = '';
+  $('f-brand-tag').value = '';
+  $('f-brand-color').value = '';
+  $('f-brand-color2').value = '';
+  closeObraBranding();
+  $('obra-modal').classList.add('show');
+  checkCodeAvailability();
+  setTimeout(() => $('f-nome').focus(), 100);
+}
+function openEditObraModal(id) {
+  const o = obras[id];
+  if (!o) return;
+  editingObraId = id;
+  $('obra-modal-title').textContent = 'Editar obra';
+  $('f-nome').value = o.nome || '';
+  $('f-cliente').value = o.cliente || '';
+  $('f-code').value = o.code || '';
+  $('f-ativo').value = (codes[o.code]?.ativo === false) ? 'false' : 'true';
+  $('f-start').value = o.start || '';
+  $('f-end').value = o.end || '';
+  $('f-sub').value = o.sub || '';
+  // Carrega override de branding (se houver)
+  const b = o.branding || {};
+  $('f-brand-name').value = b.companyName || '';
+  $('f-brand-tag').value = b.companyTag || '';
+  $('f-brand-color').value = b.primaryColor || '';
+  $('f-brand-color2').value = b.secondaryColor || '';
+  // Abre seção se tiver overrides
+  const hasOverride = b.companyName || b.companyTag || b.primaryColor || b.secondaryColor;
+  if (hasOverride) openObraBranding(); else closeObraBranding();
+  $('obra-modal').classList.add('show');
+  checkCodeAvailability();
+}
+function closeObraModal() {
+  $('obra-modal').classList.remove('show');
+}
+function toggleObraBranding() {
+  const t = $('obra-branding-toggle');
+  const b = $('obra-branding-body');
+  if (t.classList.contains('open')) closeObraBranding();
+  else openObraBranding();
+}
+function openObraBranding() {
+  $('obra-branding-toggle').classList.add('open');
+  $('obra-branding-body').style.display = '';
+}
+function closeObraBranding() {
+  $('obra-branding-toggle').classList.remove('open');
+  $('obra-branding-body').style.display = 'none';
+}
+window.openNewObraModal = openNewObraModal;
+window.openEditObraModal = openEditObraModal;
+window.closeObraModal = closeObraModal;
+window.toggleObraBranding = toggleObraBranding;
+
+async function saveObra() {
+  const nome    = $('f-nome').value.trim();
+  const cliente = $('f-cliente').value.trim();
+  const code    = normalizeCode($('f-code').value);
+  const ativo   = $('f-ativo').value === 'true';
+  const start   = $('f-start').value || null;
+  const end     = $('f-end').value || null;
+  const sub     = $('f-sub').value.trim();
+
+  // Branding override (só salva os campos preenchidos)
+  const brandName = $('f-brand-name').value.trim();
+  const brandTag  = $('f-brand-tag').value.trim();
+  const brandColor  = $('f-brand-color').value;
+  const brandColor2 = $('f-brand-color2').value;
+  let branding = null;
+  if (brandName || brandTag || brandColor || brandColor2) {
+    branding = {};
+    if (brandName)   branding.companyName = brandName;
+    if (brandTag)    branding.companyTag = brandTag;
+    if (brandColor)  branding.primaryColor = brandColor;
+    if (brandColor2) branding.secondaryColor = brandColor2;
+  }
+
+  if (!nome || !cliente || !code) {
+    toast({title:'Campos obrigatórios', msg:'Preencha nome, cliente e código.', kind:'warn'});
+    return;
+  }
+  if (!/^[A-Z0-9\-]{2,20}$/.test(code)) {
+    toast({title:'Código inválido', msg:'Use letras, números e hífen (2 a 20 caracteres).', kind:'warn'});
+    return;
+  }
+
+  const existing = codes[code];
+  if (existing && existing.obraId && existing.obraId !== editingObraId) {
+    toast({title:'Código já em uso', msg:`O código ${code} já aponta para outra obra.`, kind:'err'});
+    return;
+  }
+
+  showLoading('Salvando…');
+  $('save-obra-btn').disabled = true;
+
+  try {
+    let id = editingObraId;
+    if (!id) {
+      id = 'obra_' + Date.now().toString(36);
+    }
+
+    // Toda obra pertence a uma construtora (multi-tenant). Em edição preserva o
+    // companyId existente; em criação aplica a empresa do usuário logado.
+    const existingCompanyId = editingObraId && obras[editingObraId] ? obras[editingObraId].companyId : null;
+    const companyId = existingCompanyId || currentCompanyId;
+    if (!companyId) {
+      hideLoading();
+      toast({title:'Sem construtora vinculada', msg:'Recarregue o painel.', kind:'err'});
+      $('save-obra-btn').disabled = false;
+      return;
+    }
+
+    const obraData = { nome, cliente, code, start, end, sub, companyId, updatedAt: Date.now() };
+    if (branding) obraData.branding = branding;
+    // Se editou e removeu todos os overrides, garante que não fica branding antigo
+    if (!branding && editingObraId && obras[editingObraId]?.branding) {
+      // explicitly null pra remover
+      obraData.branding = null;
+    }
+
+    const updates = {};
+    if (editingObraId && obras[editingObraId] && obras[editingObraId].code && obras[editingObraId].code !== code) {
+      updates[`codes/${obras[editingObraId].code}`] = null;
+    }
+    updates[`obras/${id}`] = obraData;
+    updates[`codes/${code}`] = { obraId: id, ativo };
+
+    await fb.update(fb.ref(fb.db), updates);
+
+    hideLoading();
+    closeObraModal();
+    toast({title: editingObraId ? 'Obra atualizada' : 'Obra criada', msg:`Código: ${code}`});
+  } catch(e) {
+    hideLoading();
+    console.error(e);
+    toast({title:'Erro ao salvar', msg:e.message, kind:'err', duration:6000});
+  } finally {
+    $('save-obra-btn').disabled = false;
+  }
+}
+window.saveObra = saveObra;
+
+async function deleteObra(id, code) {
+  const o = obras[id];
+  if (!o) return;
+  const nTasks = tasksCount[id] || 0;
+  const msg = `Excluir a obra "${o.nome}"?\n\nIsso remove:\n• O cadastro da obra\n• O código de acesso "${code}"\n• ${nTasks} atividades\n• Todo o progresso salvo\n\nEsta ação não pode ser desfeita.`;
+  if (!confirm(msg)) return;
+
+  showLoading('Excluindo…');
+  try {
+    const updates = {};
+    updates[`obras/${id}`] = null;
+    updates[`codes/${code}`] = null;
+    updates[`tasks/${id}`] = null;
+    updates[`progress/${id}`] = null;
+    await fb.update(fb.ref(fb.db), updates);
+    hideLoading();
+    toast({title:'Obra excluída', kind:'info'});
+  } catch(e) {
+    hideLoading();
+    toast({title:'Erro ao excluir', msg:e.message, kind:'err'});
+  }
+}
+window.deleteObra = deleteObra;
+
+function openObra(id, code) {
+  window.open(`obra.html?id=${encodeURIComponent(id)}&code=${encodeURIComponent(code)}&admin=1`, '_blank');
+}
+window.openObra = openObra;
+
+/* ═══════════════════════════════════════════
+   IMPORT XLSX
+═══════════════════════════════════════════ */
+function openImportModal(obraId) {
+  importObraId = obraId;
+  pendingImport = null;
+  const o = obras[obraId];
+  $('import-obra-name').textContent = o ? o.nome : '';
+  $('import-result').innerHTML = '';
+  $('confirm-import-btn').style.display = 'none';
+  $('file-input').value = '';
+  $('import-modal').classList.add('show');
+}
+function closeImportModal() {
+  $('import-modal').classList.remove('show');
+  pendingImport = null;
+  importObraId = null;
+}
+window.openImportModal = openImportModal;
+window.closeImportModal = closeImportModal;
+
+const dropZone = $('drop-zone');
+const fileInput = $('file-input');
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) handleFile(f);
+});
+fileInput.addEventListener('change', e => {
+  const f = e.target.files[0];
+  if (f) handleFile(f);
+});
+
+function handleFile(file) {
+  if (!file.name.match(/\.xlsx?$/i)) {
+    showImportResult('Arquivo deve ser .xlsx ou .xls', true);
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = new Uint8Array(e.target.result);
+      const wb = XLSX.read(data, { type: 'array', cellDates: true });
+      const sheetName = wb.SheetNames.find(n => n.toLowerCase().includes('atividade')) || wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, { raw: false, defval: '' });
+      processImport(rows);
+    } catch(err) {
+      console.error(err);
+      showImportResult('Erro ao ler arquivo: ' + err.message, true);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// mapeia variações de nomes de coluna → chave interna
+const HEADER_MAP = {
+  'id':'id', 'ID':'id',
+  'fase':'phase', 'Fase':'phase', 'FASE':'phase',
+  'atividade':'name', 'Atividade':'name', 'nome':'name', 'tarefa':'name',
+  'departamento':'dept', 'Departamento':'dept', 'setor':'dept', 'responsável':'dept', 'responsavel':'dept',
+  'data início':'start', 'Data Início':'start', 'data inicio':'start', 'início':'start', 'inicio':'start', 'start':'start',
+  'data fim':'end', 'Data Fim':'end', 'fim':'end', 'end':'end', 'término':'end', 'termino':'end',
+  'dias':'days', 'Dias':'days', 'duração':'days', 'duracao':'days',
+  'crítica':'critical', 'Crítica':'critical', 'critica':'critical', 'critical':'critical'
+};
+
+function normalizeKey(k) {
+  return String(k||'').trim().toLowerCase().replace(/\s+/g,' ');
+}
+function mapRow(row) {
+  const out = {};
+  Object.keys(row).forEach(k => {
+    const mapped = HEADER_MAP[normalizeKey(k)] || HEADER_MAP[k];
+    if (mapped) out[mapped] = row[k];
+  });
+  return out;
+}
+
+function excelDateToISO(v) {
+  if (!v && v !== 0) return null;
+  if (v instanceof Date) {
+    const y = v.getFullYear(), m = String(v.getMonth()+1).padStart(2,'0'), d = String(v.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  const s = String(v).trim();
+  // dd/mm/yyyy ou dd-mm-yyyy
+  let m = s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})$/);
+  if (m) {
+    const dd = m[1].padStart(2,'0'), mm = m[2].padStart(2,'0');
+    let yy = m[3]; if (yy.length === 2) yy = (Number(yy) > 50 ? '19' : '20') + yy;
+    return `${yy}-${mm}-${dd}`;
+  }
+  // yyyy-mm-dd
+  m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return `${m[1]}-${m[2].padStart(2,'0')}-${m[3].padStart(2,'0')}`;
+  // número serial do Excel
+  const n = Number(s);
+  if (!isNaN(n) && n > 25000 && n < 60000) {
+    const d = new Date(Math.round((n - 25569) * 86400 * 1000));
+    const y = d.getUTCFullYear(), mo = String(d.getUTCMonth()+1).padStart(2,'0'), dy = String(d.getUTCDate()).padStart(2,'0');
+    return `${y}-${mo}-${dy}`;
+  }
+  return null;
+}
+
+function daysBetween(startIso, endIso) {
+  if (!startIso || !endIso) return 0;
+  const a = new Date(startIso), b = new Date(endIso);
+  return Math.round((b - a) / 86400000) + 1;
+}
+
+/* Detecta automaticamente se uma atividade é PROJETOS ou OBRA com base em
+   palavras-chave do nome e departamento. Usado quando o usuário não preenche
+   a coluna "Fase" (que agora é opcional). */
+const PROJ_KEYWORDS = [
+  'projeto', 'projetos', 'projetar', 'projeção',
+  'arquitetôn', 'arquitetura', 'arquiteto',
+  'estrutural', 'cálculo', 'calculista',
+  'hidráulic', 'elétric', 'sanitár', 'preventiv', 'incêndio',
+  'aprovaç', 'alvará', 'prefeitur', 'licenç', 'corpo de bombeiro',
+  'memorial', 'orçament', 'planejamento', 'projetiv',
+  'levantament', 'topograf', 'sondagem', 'son dagem',
+  'compatibiliz', 'as built', 'as-built', 'art ', 'crea', 'cau ',
+  'consultor', 'engenheir', 'arquit'
+];
+const OBRA_KEYWORDS = [
+  'escavaç', 'movimentaç', 'fundaç', 'sapata', 'estaca', 'baldrame',
+  'estrutura ', 'pilar', 'viga', 'laje', 'concretagem', 'forma ', 'fôrma',
+  'alvenaria', 'tijolo', 'bloco', 'reboco', 'chapisc', 'massa ',
+  'cobertura', 'telhad', 'forro',
+  'esquadria', 'porta ', 'janela ', 'vidro',
+  'piso ', 'cerâmic', 'porcelanat', 'azulej', 'rejunte',
+  'pintura', 'textur', 'massa corrida',
+  'instalaç', 'tubulaç', 'fiaç', 'cabo ', 'fio ',
+  'acabament', 'limpeza ', 'paisagism', 'jardim',
+  'execuç', 'demoliç', 'demolic', 'gesso', 'drywall'
+];
+
+function inferPhase(name, dept) {
+  const text = ((name||'') + ' ' + (dept||'')).toLowerCase();
+  for (const kw of PROJ_KEYWORDS) if (text.includes(kw)) return 'PROJETOS';
+  for (const kw of OBRA_KEYWORDS) if (text.includes(kw)) return 'OBRA';
+  return null; // não consegui inferir
+}
+
+/* Detecta caminho crítico: heurística sem dependências explícitas.
+   Modelo: ordena tarefas por data de início (e fim como tie-break). Constrói
+   uma cadeia "encadeada" — cada próxima tarefa do caminho começa <= 1 dia
+   após o fim da anterior (ou se sobrepõe). A cadeia mais longa em duração
+   total é tratada como caminho crítico. */
+function computeCriticalPath(tasks) {
+  if (!tasks || tasks.length === 0) return new Set();
+  const sorted = [...tasks].sort((a,b) => {
+    if (a.start !== b.start) return a.start.localeCompare(b.start);
+    return a.end.localeCompare(b.end);
+  });
+
+  const N = sorted.length;
+  const dayMs = 86400000;
+  const toDate = s => new Date(s + 'T00:00:00');
+
+  // dp[i] = duração total da maior cadeia que TERMINA em i
+  const dp = new Array(N).fill(0);
+  const parent = new Array(N).fill(-1);
+
+  for (let i = 0; i < N; i++) {
+    const ti = sorted[i];
+    const dur = (toDate(ti.end) - toDate(ti.start)) / dayMs + 1;
+    dp[i] = dur;
+    for (let j = 0; j < i; j++) {
+      const tj = sorted[j];
+      // Considera "encadeado" se i começa até 1 dia após o fim de j
+      // (ou simultâneo). Isso captura sequências sem folga.
+      const gap = (toDate(ti.start) - toDate(tj.end)) / dayMs;
+      if (gap <= 1 && (dp[j] + dur) > dp[i]) {
+        dp[i] = dp[j] + dur;
+        parent[i] = j;
+      }
+    }
+  }
+  // Pega o índice com maior dp
+  let bestEnd = 0;
+  for (let i = 1; i < N; i++) if (dp[i] > dp[bestEnd]) bestEnd = i;
+  const critical = new Set();
+  let cur = bestEnd;
+  while (cur >= 0) {
+    critical.add(sorted[cur].id);
+    cur = parent[cur];
+  }
+  return critical;
+}
+
+function processImport(rows) {
+  if (!rows || !rows.length) {
+    showImportResult('Planilha vazia ou formato não reconhecido.', true);
+    return;
+  }
+
+  const tasks = [];
+  const errors = [];
+  const warnings = [];
+  const seenIds = new Set();
+  let inferredPhaseCount = 0;
+
+  rows.forEach((raw, idx) => {
+    const r = mapRow(raw);
+    const lineNum = idx + 2; // +1 cabeçalho, +1 base 1
+
+    const name = String(r.name||'').trim();
+    if (!name) return; // linha em branco
+
+    // Fase: agora é OPCIONAL — se não vier, infere por palavras-chave
+    const phaseRaw = String(r.phase||'').trim().toUpperCase();
+    let phase = phaseRaw.startsWith('PROJ') ? 'PROJETOS' : (phaseRaw.startsWith('OBRA') ? 'OBRA' : null);
+    if (!phase) {
+      phase = inferPhase(name, r.dept);
+      if (phase) {
+        inferredPhaseCount++;
+      } else {
+        // Default seguro: OBRA (mais comum). Avisa.
+        phase = 'OBRA';
+        warnings.push(`Linha ${lineNum}: não consegui identificar a fase de "${name}" — assumi OBRA. Edite na planilha se for projeto.`);
+      }
+    }
+
+    const dept = String(r.dept||'').trim() || 'Geral';
+
+    const start = excelDateToISO(r.start);
+    const end   = excelDateToISO(r.end);
+    if (!start) { errors.push(`Linha ${lineNum}: Data início inválida ("${r.start}").`); return; }
+    if (!end)   { errors.push(`Linha ${lineNum}: Data fim inválida ("${r.end}").`); return; }
+    if (start > end) { errors.push(`Linha ${lineNum}: Data início (${fmtDateBr(start)}) é posterior à data fim (${fmtDateBr(end)}).`); return; }
+
+    let id = String(r.id||'').trim();
+    if (!id) id = 't' + String(tasks.length + 1).padStart(3,'0');
+    if (seenIds.has(id)) { errors.push(`Linha ${lineNum}: ID duplicado ("${id}").`); return; }
+    seenIds.add(id);
+
+    let days = Number(r.days);
+    if (!days || isNaN(days) || days <= 0) days = daysBetween(start, end);
+
+    // Crítica é OPCIONAL. Se vier marcado, respeita; senão, calculamos abaixo.
+    const criticalRaw = String(r.critical||'').trim().toLowerCase();
+    const explicitCritical = ['sim','s','yes','y','true','1','x'].includes(criticalRaw);
+
+    tasks.push({ id, phase, name, dept, start, end, days, critical: explicitCritical, _explicitCritical: explicitCritical });
+  });
+
+  if (errors.length) {
+    showImportResult(`Foram encontrados ${errors.length} erro(s):\n\n• ${errors.slice(0,8).join('\n• ')}${errors.length>8?'\n…':''}`, true);
+    $('confirm-import-btn').style.display = 'none';
+    pendingImport = null;
+    return;
+  }
+  if (!tasks.length) {
+    showImportResult('Nenhuma atividade válida encontrada.', true);
+    return;
+  }
+
+  // Se nenhuma atividade veio com Crítica explícita, calcula automaticamente.
+  const anyExplicit = tasks.some(t => t._explicitCritical);
+  let autoCritCount = 0;
+  if (!anyExplicit) {
+    const criticalSet = computeCriticalPath(tasks);
+    tasks.forEach(t => {
+      if (criticalSet.has(t.id)) { t.critical = true; autoCritCount++; }
+    });
+  }
+
+  // Detecta sobreposições suspeitas (mesmo dept, datas conflitantes) — só warning
+  const byDept = {};
+  tasks.forEach(t => { (byDept[t.dept] = byDept[t.dept] || []).push(t); });
+  Object.entries(byDept).forEach(([dept, arr]) => {
+    arr.sort((a,b) => a.start.localeCompare(b.start));
+    for (let i = 1; i < arr.length; i++) {
+      if (arr[i].start <= arr[i-1].end && arr[i].id !== arr[i-1].id) {
+        warnings.push(`Sobreposição em "${dept}": "${arr[i-1].name}" e "${arr[i].name}" rodam em paralelo.`);
+      }
+    }
+  });
+
+  pendingImport = { tasks: tasks.map(t => { const { _explicitCritical, ...keep } = t; return keep; }) };
+  renderImportPreview(tasks, { inferredPhaseCount, autoCritCount, warnings });
+  $('confirm-import-btn').style.display = 'inline-flex';
+}
+
+
+function renderImportPreview(tasks, info) {
+  const byPhase = { PROJETOS: 0, OBRA: 0 };
+  let critCount = 0;
+  tasks.forEach(t => { byPhase[t.phase]++; if (t.critical) critCount++; });
+  const dateStart = tasks.reduce((a,t) => !a || t.start < a ? t.start : a, null);
+  const dateEnd   = tasks.reduce((a,t) => !a || t.end > a ? t.end : a, null);
+
+  const inferredPhaseCount = info?.inferredPhaseCount || 0;
+  const autoCritCount = info?.autoCritCount || 0;
+  const warnings = info?.warnings || [];
+
+  let smartLine = '';
+  const smartParts = [];
+  if (inferredPhaseCount > 0) smartParts.push(`<strong>${inferredPhaseCount}</strong> com fase identificada automaticamente`);
+  if (autoCritCount > 0) smartParts.push(`<strong>${autoCritCount}</strong> marcada${autoCritCount>1?'s':''} no caminho crítico ⚡`);
+  if (smartParts.length) {
+    smartLine = `<div style="font-size:11.5px;color:var(--teal);margin-top:6px">🤖 Sistema preencheu: ${smartParts.join(' · ')}</div>`;
+  }
+
+  let warnHtml = '';
+  if (warnings.length) {
+    warnHtml = `<div style="background:var(--orange-bg);border-left:3px solid var(--orange);padding:10px 14px;border-radius:7px;margin:10px 0;font-size:11.5px;color:#7A3500;line-height:1.55">
+      <strong>${warnings.length} aviso${warnings.length>1?'s':''}:</strong>
+      <ul style="margin:6px 0 0 16px;padding:0">${warnings.slice(0,5).map(w => `<li>${esc(w)}</li>`).join('')}${warnings.length>5?`<li>…e mais ${warnings.length-5}</li>`:''}</ul>
+    </div>`;
+  }
+
+  let html = `
+    <div class="import-summary">
+      <strong>${tasks.length} atividades prontas pra importar</strong><br>
+      <span style="font-size:11.5px;color:var(--green-deep)">
+        ${byPhase.PROJETOS} em projetos · ${byPhase.OBRA} em obra · ${critCount} no caminho crítico · período ${fmtDateBr(dateStart)} → ${fmtDateBr(dateEnd)}
+      </span>
+      ${smartLine}
+    </div>
+    ${warnHtml}
+    <div class="import-preview">
+      <table>
+        <thead><tr><th>ID</th><th>Fase</th><th>Atividade</th><th>Dep.</th><th>Início</th><th>Fim</th><th>Dias</th></tr></thead>
+        <tbody>
+  `;
+  tasks.slice(0, 30).forEach(t => {
+    html += `<tr>
+      <td>${esc(t.id)}</td>
+      <td>${esc(t.phase)}</td>
+      <td>${t.critical?'⚡ ':''}${esc(t.name)}</td>
+      <td>${esc(t.dept)}</td>
+      <td>${fmtDateBr(t.start)}</td>
+      <td>${fmtDateBr(t.end)}</td>
+      <td>${t.days}</td>
+    </tr>`;
+  });
+  if (tasks.length > 30) {
+    html += `<tr><td colspan="7" style="text-align:center;color:var(--muted);font-style:italic">…mais ${tasks.length-30} atividades</td></tr>`;
+  }
+  html += '</tbody></table></div>';
+  $('import-result').innerHTML = html;
+}
+
+function showImportResult(msg, isError) {
+  $('import-result').innerHTML = `<div class="import-summary ${isError?'err':''}" style="white-space:pre-wrap">${esc(msg)}</div>`;
+}
+
+async function confirmImport() {
+  if (!pendingImport || !importObraId) return;
+  const o = obras[importObraId];
+  if (!o) return;
+
+  if (!confirm(`Importar ${pendingImport.tasks.length} atividades para "${o.nome}"?\n\nAs atividades atuais desta obra serão SUBSTITUÍDAS. O progresso dos IDs que permanecerem será mantido.`)) return;
+
+  showLoading('Importando atividades…');
+  $('confirm-import-btn').disabled = true;
+
+  try {
+    // Monta definição indexada por id
+    const definition = {};
+    pendingImport.tasks.forEach((t, i) => {
+      definition[t.id] = { ...t, order: i };
+    });
+
+    // Infere período se a obra não tiver
+    const dateStart = pendingImport.tasks.reduce((a,t) => !a || t.start < a ? t.start : a, null);
+    const dateEnd   = pendingImport.tasks.reduce((a,t) => !a || t.end > a ? t.end : a, null);
+
+    const updates = {};
+    updates[`tasks/${importObraId}/definition`] = definition;
+    updates[`tasks/${importObraId}/updatedAt`] = Date.now();
+    if (!o.start) updates[`obras/${importObraId}/start`] = dateStart;
+    if (!o.end)   updates[`obras/${importObraId}/end`]   = dateEnd;
+
+    // Limpa progresso de IDs que não existem mais
+    const progSnap = await fb.get(fb.ref(fb.db, `progress/${importObraId}`));
+    const currentProg = progSnap.val() || {};
+    Object.keys(currentProg).forEach(pid => {
+      if (!definition[pid]) updates[`progress/${importObraId}/${pid}`] = null;
+    });
+
+    await fb.update(fb.ref(fb.db), updates);
+
+    hideLoading();
+    closeImportModal();
+    toast({title:'Importação concluída', msg:`${pendingImport.tasks.length} atividades salvas.`});
+  } catch(e) {
+    hideLoading();
+    console.error(e);
+    toast({title:'Erro ao importar', msg:e.message, kind:'err', duration:6000});
+  } finally {
+    $('confirm-import-btn').disabled = false;
+  }
+}
+window.confirmImport = confirmImport;
+
+/* ═══════════════════════════════════════════
+   DOWNLOAD MODELO XLSX (gerado dinamicamente)
+═══════════════════════════════════════════ */
+function downloadModeloAtividades() {
+  // Gera um xlsx amigável com 2 abas: Atividades + Instruções.
+  // Fase e Crítica agora são OPCIONAIS — o sistema infere automaticamente.
+  const wb = XLSX.utils.book_new();
+
+  // Aba 1: Atividades (com 2 exemplos amarelados nas duas primeiras linhas)
+  const headers = ['ID', 'Atividade', 'Departamento', 'Data Início', 'Data Fim', 'Dias', 'Fase (opcional)', 'Crítica (opcional)'];
+  const data = [
+    headers,
+    ['t01', 'Exemplo — Projeto arquitetônico final', 'Arquitetura', '06/01/2026', '20/01/2026', 15, '', ''],
+    ['t02', 'Exemplo — Escavação e movimentação de terra', 'Equipe Obra', '02/02/2026', '27/02/2026', 26, '', ''],
+  ];
+  // Mais 50 linhas em branco
+  for (let i = 0; i < 50; i++) data.push(['', '', '', '', '', '', '', '']);
+
+  const ws = XLSX.utils.aoa_to_sheet(data);
+  // Larguras
+  ws['!cols'] = [
+    { wch: 8 },   // ID
+    { wch: 50 },  // Atividade
+    { wch: 22 },  // Departamento
+    { wch: 13 },  // Data Início
+    { wch: 13 },  // Data Fim
+    { wch: 7 },   // Dias
+    { wch: 18 },  // Fase
+    { wch: 18 },  // Crítica
+  ];
+  XLSX.utils.book_append_sheet(wb, ws, 'Atividades');
+
+  // Aba 2: Instruções
+  const ins = [
+    ['COMO USAR ESTE MODELO', ''],
+    ['', ''],
+    ['Preencha apenas os campos obrigatórios:', ''],
+    ['', '• Atividade (nome) · Data Início · Data Fim'],
+    ['', '• Departamento ajuda na cor do gráfico (opcional)'],
+    ['', ''],
+    ['O sistema preenche sozinho:', ''],
+    ['', '• Fase (Projeto ou Obra) — identifica pelo nome/departamento'],
+    ['', '• Crítica — calcula o caminho crítico com base nas datas'],
+    ['', '• ID — gera automaticamente se em branco'],
+    ['', '• Dias — calcula a partir das datas'],
+    ['', ''],
+    ['Você pode sobrescrever qualquer dos automáticos:', ''],
+    ['', '• Coluna Fase: escreva PROJETOS ou OBRA'],
+    ['', '• Coluna Crítica: escreva Sim para forçar uma atividade no caminho crítico'],
+    ['', ''],
+    ['REGRAS:', ''],
+    ['', '• Não renomeie as colunas nem altere a ordem'],
+    ['', '• A primeira aba deve se chamar Atividades'],
+    ['', '• Datas: dd/mm/aaaa, dd-mm-aaaa ou aaaa-mm-dd'],
+    ['', '• IDs duplicados serão rejeitados'],
+    ['', '• Apague as 2 primeiras linhas de exemplo antes de importar'],
+    ['', ''],
+    ['DICA:', 'Não precisa preencher Fase nem Crítica. Importe direto e veja o que o sistema sugere — você ajusta depois na tela.'],
+  ];
+  const ws2 = XLSX.utils.aoa_to_sheet(ins);
+  ws2['!cols'] = [{ wch: 36 }, { wch: 80 }];
+  XLSX.utils.book_append_sheet(wb, ws2, 'Instruções');
+
+  XLSX.writeFile(wb, 'modelo-atividades.xlsx');
+  toast({title:'Modelo baixado', msg:'Confira a aba Instruções para o passo-a-passo.'});
+}
+window.downloadModeloAtividades = downloadModeloAtividades;
+
+
+/* ═══════════════════════════════════════════
+   ADMIN TABS (Obras / Equipe / Minha Empresa)
+═══════════════════════════════════════════ */
+function switchAdmTab(name) {
+  document.querySelectorAll('.adm-tab').forEach(t => t.classList.toggle('active', t.dataset.admTab === name));
+  document.querySelectorAll('.adm-pane').forEach(p => p.classList.toggle('active', p.id === 'adm-pane-' + name));
+  if (name === 'empresa') {
+    loadEmpresaIntoForm();
+  } else if (name === 'equipe') {
+    renderEquipe();
+  }
+}
+window.switchAdmTab = switchAdmTab;
+
+/* ═══════════════════════════════════════════
+   MINHA EMPRESA (branding por construtora)
+═══════════════════════════════════════════ */
+let currentEmpresaBranding = null;
+
+const DEFAULT_EMPRESA = {
+  companyName: '',
+  companyTag: '',
+  primaryColor: '#1A7A9A',
+  secondaryColor: '#2A5580',
+  logoUrl: null,
+};
+
+async function loadEmpresaIntoForm() {
+  if (!currentUser || !currentCompanyId) return;
+  // O branding agora vive em companies/{cid}/branding e já é mantido em
+  // currentCompany pela subscription. Lê o valor de lá quando possível;
+  // cai para get() se ainda não chegou.
+  if (currentCompany && currentCompany.branding) {
+    currentEmpresaBranding = { ...DEFAULT_EMPRESA, ...currentCompany.branding };
+  } else {
+    try {
+      const snap = await fb.get(fb.ref(fb.db, `companies/${currentCompanyId}/branding`));
+      currentEmpresaBranding = snap.val() || { ...DEFAULT_EMPRESA };
+    } catch(e) {
+      console.warn(e);
+      currentEmpresaBranding = { ...DEFAULT_EMPRESA };
+    }
+  }
+  fillEmpresaForm(currentEmpresaBranding);
+  updateEmpresaPreview();
+}
+
+// Chamada pela subscription companies/{cid} sempre que a empresa muda no DB.
+// Atualiza o form se a aba estiver aberta, sem recarregar à toa.
+function fillEmpresaFormFromCompany() {
+  if (!currentCompany) return;
+  const empresaPaneActive = document.getElementById('adm-pane-empresa').classList.contains('active');
+  if (!empresaPaneActive) return;
+  currentEmpresaBranding = { ...DEFAULT_EMPRESA, ...(currentCompany.branding || {}) };
+  fillEmpresaForm(currentEmpresaBranding);
+  updateEmpresaPreview();
+}
+
+function fillEmpresaForm(b) {
+  $('emp-nome').value = b.companyName || '';
+  $('emp-slogan').value = b.companyTag || '';
+  $('emp-cor-custom').value = b.primaryColor || '#1A7A9A';
+  $('emp-cor2-custom').value = b.secondaryColor || '#2A5580';
+  highlightSwatch('cor-primaria', b.primaryColor || '#1A7A9A');
+  highlightSwatch('cor-secundaria', b.secondaryColor || '#2A5580');
+  // Logo
+  const prev = $('logo-prev');
+  const removeBtn = $('btn-remove-logo');
+  if (b.logoUrl) {
+    prev.innerHTML = '';
+    prev.classList.add('has-img');
+    prev.classList.remove('fallback');
+    const img = document.createElement('img');
+    img.src = b.logoUrl;
+    img.alt = 'Logo';
+    img.onerror = () => fillLogoFallback(b);
+    prev.appendChild(img);
+    removeBtn.style.display = '';
+  } else {
+    fillLogoFallback(b);
+    removeBtn.style.display = 'none';
+  }
+}
+
+function fillLogoFallback(b) {
+  const prev = $('logo-prev');
+  const initial = (b.companyName || 'P').trim().charAt(0).toUpperCase() || 'P';
+  prev.classList.remove('has-img');
+  prev.classList.add('fallback');
+  prev.innerHTML = '';
+  prev.style.background = `linear-gradient(135deg, ${b.primaryColor || '#1A7A9A'}, ${b.secondaryColor || '#2A5580'})`;
+  prev.textContent = initial;
+}
+
+function highlightSwatch(containerId, color) {
+  const c = (color || '').toLowerCase();
+  document.querySelectorAll(`#${containerId} .color-swatch`).forEach(s => {
+    if (s.classList.contains('custom')) return;
+    s.classList.toggle('active', (s.dataset.color || '').toLowerCase() === c);
+  });
+}
+
+function updateEmpresaPreview() {
+  const nome = $('emp-nome').value.trim() || 'Plan&jar';
+  const slogan = $('emp-slogan').value.trim() || 'Construa com clareza';
+  const cor = $('emp-cor-custom').value || '#1A7A9A';
+  const cor2 = $('emp-cor2-custom').value || '#2A5580';
+
+  $('prev-name').textContent = nome;
+  $('prev-tag').textContent = slogan;
+  document.documentElement.style.setProperty('--prev-color', cor);
+  document.documentElement.style.setProperty('--prev-color-2', cor2);
+
+  // Logo preview no card de prévia
+  const prevLogo = $('prev-logo');
+  // Remove imagem antiga
+  prevLogo.innerHTML = '';
+  prevLogo.classList.remove('has-img');
+  // Vê se tem logo no formulário (logo-prev tem img dentro)
+  const formImg = $('logo-prev').querySelector('img');
+  if (formImg) {
+    prevLogo.classList.add('has-img');
+    const img = document.createElement('img');
+    img.src = formImg.src;
+    prevLogo.appendChild(img);
+  } else {
+    prevLogo.style.background = `linear-gradient(135deg, ${cor}, ${cor2})`;
+    prevLogo.textContent = (nome || 'P').trim().charAt(0).toUpperCase();
+  }
+}
+window.updateEmpresaPreview = updateEmpresaPreview;
+
+// Listeners para os swatches de cor
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('#cor-primaria .color-swatch:not(.custom)').forEach(s => {
+    s.addEventListener('click', () => {
+      const c = s.dataset.color;
+      $('emp-cor-custom').value = c;
+      highlightSwatch('cor-primaria', c);
+      updateEmpresaPreview();
+    });
+  });
+  document.querySelectorAll('#cor-secundaria .color-swatch:not(.custom)').forEach(s => {
+    s.addEventListener('click', () => {
+      const c = s.dataset.color;
+      $('emp-cor2-custom').value = c;
+      highlightSwatch('cor-secundaria', c);
+      updateEmpresaPreview();
+    });
+  });
+  // Inputs custom color
+  const corCustom = $('emp-cor-custom');
+  if (corCustom) {
+    corCustom.addEventListener('input', () => {
+      highlightSwatch('cor-primaria', corCustom.value);
+      updateEmpresaPreview();
+    });
+  }
+  const cor2Custom = $('emp-cor2-custom');
+  if (cor2Custom) {
+    cor2Custom.addEventListener('input', () => {
+      highlightSwatch('cor-secundaria', cor2Custom.value);
+      updateEmpresaPreview();
+    });
+  }
+  // Upload de logo
+  const logoFile = $('emp-logo-file');
+  if (logoFile) {
+    logoFile.addEventListener('change', handleLogoUpload);
+  }
+});
+
+/* ── Helpers de logo: converte arquivo em data URL e (se for raster) redimensiona pra caber no DB ── */
+function fileToDataURL(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result);
+    r.onerror = () => rej(r.error || new Error('Falha ao ler arquivo'));
+    r.readAsDataURL(file);
+  });
+}
+
+// Redimensiona PNG/JPG/WEBP para no máximo 256px no maior lado e exporta em PNG
+// (ou JPEG, se for foto). SVG não é redimensionado — mantém o original.
+async function shrinkImageDataURL(file, maxDim = 256, quality = 0.9) {
+  if (file.type === 'image/svg+xml') {
+    return await fileToDataURL(file); // SVG: usa como está
+  }
+  const dataUrl = await fileToDataURL(file);
+  return new Promise((res, rej) => {
+    const img = new Image();
+    img.onload = () => {
+      const ratio = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.round(img.width * ratio);
+      const h = Math.round(img.height * ratio);
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, w, h);
+      // Tenta PNG (preserva transparência); cai pra JPEG só se ficar enorme.
+      let out = canvas.toDataURL('image/png');
+      if (out.length > 220 * 1024) {
+        out = canvas.toDataURL('image/jpeg', quality);
+      }
+      res(out);
+    };
+    img.onerror = () => rej(new Error('Imagem inválida'));
+    img.src = dataUrl;
+  });
+}
+
+async function handleLogoUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (!currentUser || !currentCompanyId) {
+    toast({title:'Faça login primeiro', kind:'warn'});
+    return;
+  }
+  if (file.size > 4 * 1024 * 1024) {
+    toast({title:'Arquivo muito grande', msg:'Use uma imagem de até 4 MB. O sistema vai redimensionar automaticamente.', kind:'err'});
+    e.target.value = '';
+    return;
+  }
+  if (!/^image\/(png|jpeg|jpg|svg\+xml|webp)$/.test(file.type)) {
+    toast({title:'Formato não suportado', msg:'Use PNG, JPG, SVG ou WebP.', kind:'err'});
+    e.target.value = '';
+    return;
+  }
+
+  setEmpStatus('saving', 'Processando logo…');
+  try {
+    // Converte (e redimensiona se raster). Resultado é uma data URL pronta pra
+    // ser salva no Realtime Database — não depende do Firebase Storage.
+    const dataUrl = await shrinkImageDataURL(file, 256, 0.9);
+
+    // Sanidade: não passa de ~280KB depois do shrink. Se passar, avisa.
+    if (dataUrl.length > 280 * 1024) {
+      toast({title:'Logo muito pesado', msg:'Mesmo após redimensionar, ficou maior que o limite. Tente uma imagem mais simples ou um SVG.', kind:'err', duration:7000});
+      setEmpStatus('error', 'Logo muito pesado');
+      return;
+    }
+
+    // Atualiza o preview imediatamente (antes mesmo de salvar)
+    const prev = $('logo-prev');
+    prev.innerHTML = '';
+    prev.classList.add('has-img');
+    prev.classList.remove('fallback');
+    const img = document.createElement('img');
+    img.src = dataUrl;
+    prev.appendChild(img);
+    $('btn-remove-logo').style.display = '';
+
+    if (!currentEmpresaBranding) currentEmpresaBranding = { ...DEFAULT_EMPRESA };
+    // logoUrl agora é uma data URL (base64). Mantemos o mesmo nome de campo
+    // para que o resto do app (obra.html) continue funcionando sem alterações.
+    currentEmpresaBranding.logoUrl = dataUrl;
+    // logoPath não é mais necessário (sem Storage), mas zeramos pra limpar dados antigos
+    currentEmpresaBranding.logoPath = null;
+
+    updateEmpresaPreview();
+    setEmpStatus('saved', 'Logo carregado — clique em "Salvar" para confirmar');
+  } catch(err) {
+    console.error('[upload logo]', err);
+    toast({title:'Erro ao processar logo', msg: err.message || 'Tente outra imagem.', kind:'err', duration:6000});
+    setEmpStatus('error', 'Falha ao processar');
+  } finally {
+    e.target.value = '';
+  }
+}
+
+async function removeLogo() {
+  if (!currentUser || !currentEmpresaBranding) return;
+  if (!confirm('Remover o logo? A inicial colorida voltará a ser exibida.')) return;
+  currentEmpresaBranding.logoUrl = null;
+  currentEmpresaBranding.logoPath = null;
+  fillLogoFallback(currentEmpresaBranding);
+  updateEmpresaPreview();
+  $('btn-remove-logo').style.display = 'none';
+  setEmpStatus('saved', 'Logo removido — clique em "Salvar" para confirmar');
+}
+window.removeLogo = removeLogo;
+
+async function saveEmpresa() {
+  if (!currentUser || !currentCompanyId) return;
+  // Só o owner pode mudar branding (regra simples no client; o Firebase
+  // ainda decide pelas rules — esse if só evita o toast feio).
+  if (currentUserProfile && currentUserProfile.role !== 'owner') {
+    toast({title:'Só o owner pode editar a marca', msg:'Peça pro admin da construtora.', kind:'warn'});
+    return;
+  }
+  const data = {
+    companyName: $('emp-nome').value.trim() || null,
+    companyTag:  $('emp-slogan').value.trim() || null,
+    primaryColor: $('emp-cor-custom').value || '#1A7A9A',
+    secondaryColor: $('emp-cor2-custom').value || '#2A5580',
+    logoUrl: currentEmpresaBranding?.logoUrl || null,
+    logoPath: currentEmpresaBranding?.logoPath || null,
+    updatedAt: Date.now(),
+  };
+  setEmpStatus('saving', 'Salvando…');
+  try {
+    const updates = {};
+    updates[`companies/${currentCompanyId}/branding`] = data;
+    // Mantém o nome da empresa em sincronia com o branding (campo top-level
+    // serve como fonte canônica para listagem em outras telas).
+    if (data.companyName) {
+      updates[`companies/${currentCompanyId}/name`] = data.companyName;
+    }
+    await fb.update(fb.ref(fb.db), updates);
+    currentEmpresaBranding = data;
+    setEmpStatus('saved', 'Configurações salvas ✓');
+    toast({title:'Empresa salva', msg:'Suas obras já vão aparecer com a nova marca.', kind:'success'});
+  } catch(e) {
+    console.error(e);
+    setEmpStatus('error', 'Erro ao salvar');
+    toast({title:'Erro', msg:e.message, kind:'err'});
+  }
+}
+window.saveEmpresa = saveEmpresa;
+
+async function resetEmpresa() {
+  if (!confirm('Restaurar configurações padrão? O logo será mantido (você pode removê-lo separadamente).')) return;
+  $('emp-nome').value = '';
+  $('emp-slogan').value = '';
+  $('emp-cor-custom').value = '#1A7A9A';
+  $('emp-cor2-custom').value = '#2A5580';
+  highlightSwatch('cor-primaria', '#1A7A9A');
+  highlightSwatch('cor-secundaria', '#2A5580');
+  updateEmpresaPreview();
+  setEmpStatus('saving', 'Não salvo — clique em "Salvar"');
+}
+window.resetEmpresa = resetEmpresa;
+
+function setEmpStatus(kind, label) {
+  const s = $('emp-save-status');
+  const l = $('emp-save-lbl');
+  if (s) s.className = 'save-status ' + (kind || '');
+  if (l) l.textContent = label || '';
+}
+
+/* ═══════════════════════════════════════════
+   ONBOARDING — criar construtora no 1º login
+═══════════════════════════════════════════ */
+async function createCompany() {
+  if (!currentUser) return;
+  const name = $('ob-company-name').value.trim();
+  const display = $('ob-display-name').value.trim();
+  const errEl = $('ob-err');
+  errEl.classList.remove('show');
+
+  if (!name) {
+    errEl.textContent = 'Digite o nome da construtora.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  const btn = $('ob-create-btn');
+  btn.disabled = true;
+  btn.textContent = 'Criando…';
+
+  try {
+    // Gera um companyId estável baseado no nome (slug ascii). Append do uid
+    // só nos últimos 6 chars pra evitar colisão se duas empresas tiverem o mesmo nome.
+    const slug = name.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 30);
+    const companyId = slug + '-' + currentUser.uid.slice(-6);
+
+    const updates = {};
+    updates[`companies/${companyId}`] = {
+      name,
+      ownerUid: currentUser.uid,
+      branding: {
+        companyName: name,
+        companyTag: '',
+        primaryColor: '#1A7A9A',
+        secondaryColor: '#2A5580',
+        logoUrl: null,
+      },
+      createdAt: Date.now(),
+    };
+    updates[`users/${currentUser.uid}`] = {
+      companyId,
+      role: 'owner',
+      email: currentUser.email,
+      displayName: display || currentUser.email.split('@')[0],
+      addedAt: Date.now(),
+    };
+
+    await fb.update(fb.ref(fb.db), updates);
+
+    // Recarrega o perfil e a empresa
+    currentCompanyId = companyId;
+    currentUserProfile = updates[`users/${currentUser.uid}`];
+    await loadCurrentCompany();
+
+    $('onboarding').classList.remove('show');
+    $('admin').classList.add('active');
+    subscribeData();
+    toast({title:'Construtora criada ✓', msg:`Bem-vindo a ${name}.`, kind:'success'});
+  } catch(e) {
+    console.error('[createCompany]', e);
+    errEl.textContent = 'Erro ao criar: ' + (e.code === 'PERMISSION_DENIED'
+      ? 'permissão negada. Verifique as regras do Firebase.'
+      : e.message);
+    errEl.classList.add('show');
+    btn.disabled = false;
+    btn.textContent = 'Criar construtora';
+  }
+}
+window.createCompany = createCompany;
+
+/* ═══════════════════════════════════════════
+   EQUIPE — gerenciar usuários da construtora
+═══════════════════════════════════════════ */
+function fmtDateBrFromTs(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`;
+}
+
+function renderEquipe() {
+  const body = $('equipe-body');
+  if (!body) return;
+
+  // Cabeçalho com nome da empresa
+  const nameEl = $('equipe-company-name');
+  const infoEl = $('equipe-company-info');
+  if (currentCompany) {
+    nameEl.textContent = currentCompany.name || 'Construtora';
+    const memberCount = Object.keys(companyMembers).length;
+    infoEl.textContent = `${memberCount} usuário${memberCount===1?'':'s'} cadastrado${memberCount===1?'':'s'}`;
+  }
+
+  // Botão "Novo usuário" só aparece pro owner
+  const btnNew = $('btn-new-member');
+  if (btnNew) {
+    btnNew.style.display = (currentUserProfile && currentUserProfile.role === 'owner') ? '' : 'none';
+  }
+
+  const list = Object.entries(companyMembers)
+    .map(([uid, u]) => ({ uid, ...u }))
+    .sort((a, b) => {
+      // Owner sempre primeiro
+      if (a.role === 'owner' && b.role !== 'owner') return -1;
+      if (b.role === 'owner' && a.role !== 'owner') return 1;
+      return (a.addedAt || 0) - (b.addedAt || 0);
+    });
+
+  if (!list.length) {
+    body.innerHTML = `<tr><td colspan="4" class="empty"><div class="empty-title">Sem usuários</div><div class="empty-sub">Cadastre o primeiro usuário da equipe.</div></td></tr>`;
+    return;
+  }
+
+  body.innerHTML = list.map(m => {
+    const isSelf = m.uid === currentUser.uid;
+    const isOwner = m.role === 'owner';
+    const canIRemove = (currentUserProfile?.role === 'owner') && !isSelf && !isOwner;
+    return `<tr>
+      <td>
+        <div class="equipe-name">${esc(m.displayName || m.email.split('@')[0])} ${isSelf ? '<span class="equipe-self">(você)</span>' : ''}</div>
+        <div class="equipe-email">${esc(m.email)}</div>
+      </td>
+      <td><span class="role-badge ${isOwner ? 'owner' : 'member'}">${isOwner ? 'Dono' : 'Usuário'}</span></td>
+      <td style="color:var(--muted);font-size:12px">${fmtDateBrFromTs(m.addedAt)}</td>
+      <td style="text-align:right">
+        ${canIRemove ? `
+          <button class="icon-action danger" title="Remover do painel" onclick="removeMember('${m.uid}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+          </button>
+        ` : ''}
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function openMemberModal() {
+  if (!currentUserProfile || currentUserProfile.role !== 'owner') {
+    toast({title:'Só o dono cadastra usuários', kind:'warn'});
+    return;
+  }
+  $('m-email').value = '';
+  $('m-name').value = '';
+  $('m-pass').value = '';
+  $('m-err').classList.remove('show');
+  $('member-modal').classList.add('show');
+  setTimeout(() => $('m-email').focus(), 100);
+}
+window.openMemberModal = openMemberModal;
+
+function closeMemberModal() {
+  $('member-modal').classList.remove('show');
+}
+window.closeMemberModal = closeMemberModal;
+
+function generatePassword() {
+  // 12 caracteres legíveis (sem confundir 0/O, 1/l)
+  const chars = 'abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let p = '';
+  for (let i = 0; i < 12; i++) p += chars.charAt(Math.floor(Math.random() * chars.length));
+  $('m-pass').value = p;
+}
+window.generatePassword = generatePassword;
+
+async function saveMember() {
+  if (!currentCompanyId || !currentUserProfile || currentUserProfile.role !== 'owner') return;
+
+  const email = $('m-email').value.trim().toLowerCase();
+  const name  = $('m-name').value.trim();
+  const pass  = $('m-pass').value;
+  const errEl = $('m-err');
+  errEl.classList.remove('show');
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = 'Email inválido.';
+    errEl.classList.add('show');
+    return;
+  }
+  if (!pass || pass.length < 6) {
+    errEl.textContent = 'A senha precisa ter no mínimo 6 caracteres.';
+    errEl.classList.add('show');
+    return;
+  }
+
+  const btn = $('save-member-btn');
+  btn.disabled = true;
+  btn.textContent = 'Cadastrando…';
+
+  try {
+    // 1) Cria a conta no Firebase Auth pela app secundária (não desloga o admin)
+    const newUser = await fb.createUserSecondary(email, pass);
+
+    // 2) Vincula o uid à construtora
+    await fb.set(fb.ref(fb.db, `users/${newUser.uid}`), {
+      companyId: currentCompanyId,
+      role: 'member',
+      email,
+      displayName: name || email.split('@')[0],
+      addedAt: Date.now(),
+    });
+
+    closeMemberModal();
+    toast({
+      title:'Usuário cadastrado ✓',
+      msg:`${email} já pode fazer login. Compartilhe a senha por um canal seguro.`,
+      kind:'success',
+      duration:7000
+    });
+  } catch(e) {
+    console.error('[saveMember]', e);
+    let msg = e.message || 'Erro ao cadastrar.';
+    if (e.code === 'auth/email-already-in-use') {
+      msg = 'Esse email já tem conta no Firebase. Se for da sua equipe, peça pra ele(a) fazer login — depois vincule manualmente. Ou use outro email.';
+    } else if (e.code === 'auth/weak-password') {
+      msg = 'Senha muito fraca. Mínimo 6 caracteres.';
+    } else if (e.code === 'auth/invalid-email') {
+      msg = 'Email inválido.';
+    } else if (e.code === 'PERMISSION_DENIED') {
+      msg = 'Permissão negada nas regras do Firebase. O usuário foi criado mas não foi vinculado.';
+    }
+    errEl.textContent = msg;
+    errEl.classList.add('show');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Cadastrar usuário';
+  }
+}
+window.saveMember = saveMember;
+
+async function removeMember(uid) {
+  if (!currentUserProfile || currentUserProfile.role !== 'owner') return;
+  const m = companyMembers[uid];
+  if (!m) return;
+  if (uid === currentUser.uid) {
+    toast({title:'Você não pode se remover', kind:'warn'});
+    return;
+  }
+  if (!confirm(`Remover ${m.email} da construtora?\n\nAviso: a conta no Firebase NÃO é deletada — só a vinculação à empresa. O usuário não conseguirá mais entrar nesse painel, mas a conta de login dele continua existindo.`)) return;
+
+  try {
+    await fb.set(fb.ref(fb.db, `users/${uid}`), null);
+    toast({title:'Usuário removido', kind:'info'});
+  } catch(e) {
+    console.error('[removeMember]', e);
+    toast({title:'Erro ao remover', msg:e.message, kind:'err'});
+  }
+}
+window.removeMember = removeMember;
+
+// Fecha modais ao clicar no backdrop
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); });
+});
+// ESC fecha
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-backdrop.show').forEach(m => m.classList.remove('show'));
+});
+</script>
+
+</body>
+</html>

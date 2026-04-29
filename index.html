@@ -1,0 +1,1291 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="version" content="2026-04-29-v4">
+<title>Plan&amp;jar — A construtora para de perder dinheiro na obra</title>
+<meta name="description" content="Plan&jar é o sistema que mostra, todo dia, onde sua obra está saindo do plano — antes do prejuízo aparecer. Cronograma, financeiro por potes e medições físico×financeiro em uma só tela.">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1C3D5A;--navy-dark:#122738;--navy-deeper:#0A1A26;--navy-light:#2A5580;
+  --teal:#1A7A9A;--teal-light:#D6EEF6;--teal-bright:#22A0C4;
+  --green:#1A8A55;--green-bg:#E8F5EE;--green-bright:#34D399;
+  --red:#C0392B;--red-bg:#FDECEA;
+  --amber:#D97706;--amber-bg:#FEF3C7;
+  --border:#D0DDE8;--bg:#EDF2F7;--white:#FFFFFF;
+  --text:#1A2D3D;--muted:#6B8296;--gray-bg:#F4F7FA;
+}
+html,body{overflow-x:hidden;scroll-behavior:smooth}
+body{
+  font-family:'Poppins',system-ui,sans-serif;
+  color:var(--text);
+  -webkit-font-smoothing:antialiased;
+  background:var(--white);
+}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+
+/* ═══════════ LOGO Plan&jar (visualmente parece "Planejar") ═══════════ */
+.logo-text{
+  font-family:'Poppins',sans-serif;
+  font-weight:700;
+  letter-spacing:-.5px;
+  line-height:1;
+  display:inline-flex;
+  align-items:baseline;
+}
+.logo-text .lp{}
+.logo-text .lamp{
+  font-weight:600;
+  margin:0 -.05em;
+  transform:translateY(-.06em);
+  font-size:.9em;
+  color:inherit;
+  opacity:.92;
+}
+.logo-text .lj{}
+
+/* ═══════════════════════ NAVBAR ═══════════════════════ */
+.nav{
+  position:sticky;top:0;z-index:100;
+  background:rgba(18,39,56,.96);
+  backdrop-filter:blur(12px);
+  border-bottom:1px solid rgba(255,255,255,.08);
+  transition:background .3s;
+}
+.nav-inner{
+  max-width:1200px;margin:0 auto;padding:14px 28px;
+  display:flex;align-items:center;gap:14px;
+}
+.nav-brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:#fff}
+.nav-logo{
+  width:42px;height:42px;border-radius:9px;
+  background:linear-gradient(135deg,var(--teal),var(--navy-light));
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;
+  box-shadow:0 2px 10px rgba(0,0,0,.3);
+  font-size:13px;
+}
+.nav-brand-name{font-size:18px;color:#fff;line-height:1}
+.nav-brand-tag{font-size:9px;color:rgba(255,255,255,.5);letter-spacing:1.6px;text-transform:uppercase;margin-top:4px;font-weight:500}
+.nav-spacer{flex:1}
+.nav-links{display:flex;align-items:center;gap:6px}
+.nav-link{
+  font-size:12px;font-weight:500;color:rgba(255,255,255,.75);text-decoration:none;
+  padding:8px 14px;border-radius:6px;transition:all .2s;
+}
+.nav-link:hover{color:#fff;background:rgba(255,255,255,.06)}
+.nav-cta{
+  font-size:12px;font-weight:600;letter-spacing:.5px;
+  background:linear-gradient(135deg,var(--teal),var(--teal-bright));
+  color:#fff;text-decoration:none;
+  padding:9px 18px;border-radius:6px;transition:all .2s;
+  display:inline-flex;align-items:center;gap:6px;
+  box-shadow:0 4px 14px rgba(26,122,154,.4);
+}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(26,122,154,.55)}
+.nav-toggle{display:none;background:transparent;border:none;color:#fff;font-size:22px;cursor:pointer;padding:6px}
+
+/* ═══════════════════════ HERO ═══════════════════════ */
+.hero{
+  position:relative;
+  background:
+    radial-gradient(ellipse at 20% 30%,rgba(26,122,154,.28),transparent 55%),
+    radial-gradient(ellipse at 80% 70%,rgba(42,85,128,.32),transparent 55%),
+    linear-gradient(135deg,var(--navy-deeper),var(--navy-dark) 50%,var(--navy));
+  padding:64px 28px 90px;
+  overflow:hidden;
+}
+.hero::before{
+  content:"";position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;
+  mask-image:radial-gradient(ellipse at center,black,transparent 75%);
+}
+.hero-inner{
+  max-width:1200px;margin:0 auto;position:relative;
+  display:grid;grid-template-columns:1.1fr 1fr;gap:60px;align-items:center;
+}
+.hero-text{animation:fadeUp .8s ease both}
+.hero-eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--teal-bright);
+  background:rgba(26,122,154,.15);
+  border:1px solid rgba(34,160,196,.3);
+  padding:6px 14px;border-radius:30px;
+  margin-bottom:22px;
+}
+.hero-eyebrow .pulse{
+  width:8px;height:8px;border-radius:50%;background:#69F0AE;
+  box-shadow:0 0 12px rgba(105,240,174,.7);
+  animation:pulse 2s infinite;
+}
+.hero-title{
+  font-size:50px;font-weight:700;line-height:1.05;color:#fff;
+  letter-spacing:-1.2px;margin-bottom:22px;
+}
+.hero-title .accent{
+  background:linear-gradient(135deg,var(--teal-bright),#69F0AE);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.hero-title .strike{
+  position:relative;color:rgba(255,255,255,.55);
+  text-decoration:line-through;
+  text-decoration-color:rgba(255,107,107,.7);
+  text-decoration-thickness:3px;
+}
+.hero-sub{
+  font-size:17px;line-height:1.6;color:rgba(255,255,255,.78);
+  margin-bottom:32px;max-width:540px;
+}
+.hero-sub strong{color:#fff;font-weight:600}
+.hero-actions{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:36px}
+.btn-hero-primary{
+  background:linear-gradient(135deg,var(--teal),var(--teal-bright));
+  color:#fff;text-decoration:none;
+  padding:15px 28px;border-radius:8px;
+  font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:8px;
+  box-shadow:0 8px 24px rgba(26,122,154,.45);
+  transition:all .25s;
+  border:none;cursor:pointer;font-family:inherit;
+}
+.btn-hero-primary:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(26,122,154,.6)}
+.btn-hero-secondary{
+  background:rgba(255,255,255,.08);
+  color:#fff;text-decoration:none;
+  padding:15px 28px;border-radius:8px;
+  font-size:13px;font-weight:600;letter-spacing:1px;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:8px;
+  border:1px solid rgba(255,255,255,.2);
+  transition:all .25s;
+}
+.btn-hero-secondary:hover{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.4)}
+
+.hero-badges{display:flex;gap:24px;flex-wrap:wrap}
+.hero-badge{display:flex;align-items:center;gap:10px;color:rgba(255,255,255,.78);font-size:12.5px;font-weight:500}
+.hero-badge svg{color:#69F0AE;flex-shrink:0}
+
+/* HERO LOGIN CARD */
+.access-card{
+  background:#fff;border-radius:14px;
+  box-shadow:0 30px 80px rgba(0,0,0,.4),0 6px 20px rgba(0,0,0,.2);
+  overflow:hidden;
+  animation:fadeUp .9s ease .1s both;
+}
+.access-top{
+  background:var(--navy-dark);padding:22px 26px;
+  display:flex;align-items:center;gap:12px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.access-top-icon{
+  width:42px;height:42px;border-radius:8px;
+  background:linear-gradient(135deg,var(--teal),var(--navy-light));
+  display:flex;align-items:center;justify-content:center;color:#fff;
+  flex-shrink:0;
+}
+.access-top-text{flex:1}
+.access-top-title{font-size:13px;font-weight:600;color:#fff;letter-spacing:.5px}
+.access-top-sub{font-size:10.5px;color:rgba(255,255,255,.55);margin-top:2px;letter-spacing:.5px}
+
+.access-body{padding:28px 26px 24px}
+.access-title{font-size:18px;font-weight:600;margin-bottom:6px}
+.access-sub{font-size:12.5px;color:var(--muted);margin-bottom:22px;line-height:1.5}
+
+.access-tabs{display:flex;gap:4px;background:var(--gray-bg);padding:4px;border-radius:8px;margin-bottom:22px}
+.access-tab{
+  flex:1;padding:9px 12px;font-size:11.5px;font-weight:600;
+  letter-spacing:.5px;text-transform:uppercase;
+  background:transparent;border:none;border-radius:6px;
+  cursor:pointer;color:var(--muted);transition:all .2s;
+  font-family:inherit;
+}
+.access-tab.active{background:#fff;color:var(--navy);box-shadow:0 2px 6px rgba(0,0,0,.06)}
+
+.access-pane{display:none;animation:fadeIn .3s ease}
+.access-pane.active{display:block}
+
+.field-lbl{
+  display:block;font-size:10px;letter-spacing:1.8px;text-transform:uppercase;
+  font-weight:600;color:var(--muted);margin-bottom:7px;
+}
+.input{
+  width:100%;padding:12px 14px;font-size:14px;font-weight:500;
+  font-family:inherit;color:var(--text);
+  border:2px solid var(--border);border-radius:8px;
+  background:#FAFCFE;transition:all .2s;outline:none;
+}
+.input.uppercase{font-size:16px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;text-align:center}
+.input:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 4px rgba(26,122,154,.12)}
+.input.error{border-color:var(--red);background:var(--red-bg);animation:shake .35s ease}
+
+.hint{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.4}
+.hint.err{color:var(--red);font-weight:500}
+
+.btn{
+  width:100%;margin-top:14px;padding:13px;
+  font-size:12.5px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;
+  color:#fff;background:linear-gradient(135deg,var(--teal),var(--navy-light));
+  border:none;border-radius:8px;cursor:pointer;
+  font-family:inherit;transition:all .2s;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+}
+.btn:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 8px 20px rgba(26,122,154,.35)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn .spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+
+.field-row{margin-bottom:14px}
+
+/* ═══════════════════════ DOR / PROBLEMA ═══════════════════════ */
+.pain{
+  background:linear-gradient(180deg,#FFFFFF 0%,#FAFCFE 100%);
+  padding:80px 28px 60px;
+  border-bottom:1px solid var(--border);
+}
+.pain-inner{max-width:1100px;margin:0 auto;text-align:center}
+.pain-eyebrow{
+  font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--red);margin-bottom:14px;
+}
+.pain-title{
+  font-size:36px;font-weight:700;line-height:1.2;color:var(--text);
+  margin-bottom:16px;letter-spacing:-.5px;
+}
+.pain-sub{
+  font-size:16px;color:var(--muted);line-height:1.6;
+  max-width:680px;margin:0 auto 50px;
+}
+.pain-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+  text-align:left;
+}
+.pain-card{
+  background:#fff;border:1px solid var(--border);
+  border-radius:12px;padding:28px 26px;
+  position:relative;overflow:hidden;
+  transition:all .25s;
+}
+.pain-card:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(192,57,43,.10)}
+.pain-card::before{
+  content:"";position:absolute;left:0;top:0;bottom:0;width:3px;
+  background:var(--red);
+}
+.pain-card-icon{
+  width:44px;height:44px;border-radius:10px;
+  background:var(--red-bg);color:var(--red);
+  display:flex;align-items:center;justify-content:center;
+  margin-bottom:16px;
+}
+.pain-card-quote{
+  font-size:15px;line-height:1.55;color:var(--text);
+  font-weight:500;margin-bottom:10px;
+}
+.pain-card-cost{
+  font-size:12px;color:var(--red);font-weight:600;
+  letter-spacing:.5px;
+}
+
+/* ═══════════════════════ TRUST BAR ═══════════════════════ */
+.trust{
+  background:var(--gray-bg);padding:28px;
+  border-bottom:1px solid var(--border);
+}
+.trust-inner{
+  max-width:1200px;margin:0 auto;
+  display:grid;grid-template-columns:repeat(4,1fr);gap:32px;
+}
+.trust-item{text-align:center}
+.trust-num{
+  font-size:30px;font-weight:700;line-height:1;
+  background:linear-gradient(135deg,var(--teal),var(--navy));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.trust-lbl{
+  font-size:11px;font-weight:600;color:var(--muted);
+  letter-spacing:1.2px;text-transform:uppercase;margin-top:8px;
+}
+
+/* ═══════════════════════ SECTION TITLES ═══════════════════════ */
+.section{padding:80px 28px}
+.section-inner{max-width:1200px;margin:0 auto}
+.sec-eyebrow{
+  font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--teal);margin-bottom:12px;text-align:center;
+}
+.sec-title{
+  font-size:36px;font-weight:700;line-height:1.2;color:var(--text);
+  text-align:center;margin-bottom:14px;letter-spacing:-.5px;
+}
+.sec-sub{
+  font-size:15px;color:var(--muted);line-height:1.6;
+  text-align:center;max-width:680px;margin:0 auto 50px;
+}
+
+/* ═══════════════════════ SOLUÇÃO (3 PILARES) ═══════════════════════ */
+.solution{background:#fff}
+.pillars{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:24px;
+}
+.pillar{
+  background:#fff;border-radius:14px;padding:32px 28px;
+  border:1px solid var(--border);
+  transition:all .3s;position:relative;overflow:hidden;
+}
+.pillar:hover{transform:translateY(-4px);box-shadow:0 18px 44px rgba(10,30,60,.08);border-color:var(--teal-light)}
+.pillar-num{
+  position:absolute;top:24px;right:24px;
+  font-size:54px;font-weight:800;line-height:1;
+  color:var(--teal-light);opacity:.5;
+}
+.pillar-icon{
+  width:54px;height:54px;border-radius:12px;
+  background:linear-gradient(135deg,var(--teal-light),#fff);
+  border:1px solid var(--teal-light);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--teal);margin-bottom:20px;
+}
+.pillar-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:10px;line-height:1.3}
+.pillar-text{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.pillar-text strong{color:var(--text);font-weight:600}
+.pillar-result{
+  font-size:12px;color:var(--green);font-weight:600;
+  display:flex;align-items:center;gap:8px;
+  padding-top:14px;border-top:1px solid var(--border);
+}
+
+/* ═══════════════════════ FEATURES ═══════════════════════ */
+.features-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:22px;
+}
+.feature{
+  background:#fff;border-radius:12px;padding:26px 24px;
+  border:1px solid var(--border);
+  transition:all .3s;
+}
+.feature:hover{transform:translateY(-3px);box-shadow:0 14px 36px rgba(10,30,60,.08);border-color:var(--teal-light)}
+.feature-icon{
+  width:44px;height:44px;border-radius:10px;
+  background:linear-gradient(135deg,var(--teal-light),#fff);
+  border:1px solid var(--teal-light);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--teal);margin-bottom:16px;
+}
+.feature-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px}
+.feature-text{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* ═══════════════════════ HOW IT WORKS ═══════════════════════ */
+.how{background:var(--gray-bg)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;position:relative}
+.steps::before{
+  content:"";position:absolute;top:34px;left:18%;right:18%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--teal-light),var(--teal-light),transparent);
+  z-index:0;
+}
+.step{
+  background:#fff;border-radius:12px;padding:28px 22px;
+  border:1px solid var(--border);position:relative;z-index:1;
+  text-align:center;
+}
+.step-num{
+  width:54px;height:54px;border-radius:50%;
+  background:linear-gradient(135deg,var(--teal),var(--navy-light));
+  color:#fff;font-size:22px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 16px;box-shadow:0 6px 18px rgba(26,122,154,.35);
+}
+.step-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:8px}
+.step-text{font-size:12.5px;color:var(--muted);line-height:1.6}
+
+/* ═══════════════════════ SHOWCASE ═══════════════════════ */
+.showcase-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center;
+}
+.showcase-text{padding:0 12px}
+.showcase-list{display:flex;flex-direction:column;gap:18px;margin-top:24px}
+.showcase-item{display:flex;gap:14px;align-items:flex-start}
+.showcase-check{
+  width:28px;height:28px;border-radius:50%;
+  background:var(--green-bg);color:var(--green);
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.showcase-item-text strong{display:block;font-size:14px;color:var(--text);margin-bottom:3px}
+.showcase-item-text span{font-size:13px;color:var(--muted);line-height:1.5}
+
+.showcase-visual{
+  position:relative;border-radius:14px;overflow:hidden;
+  box-shadow:0 24px 60px rgba(10,30,60,.18);
+  background:#fff;border:1px solid var(--border);
+  aspect-ratio:4/3;
+}
+.float-anim{animation:float 6s ease-in-out infinite}
+/* Mock dashboard */
+.mock{padding:0;height:100%;display:flex;flex-direction:column;background:#fff}
+.mock-header{
+  background:var(--navy-dark);padding:14px 18px;
+  display:flex;align-items:center;gap:10px;
+}
+.mock-header-logo{
+  width:28px;height:28px;border-radius:6px;
+  background:linear-gradient(135deg,var(--teal),var(--navy-light));
+  display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px;
+}
+.mock-header-text{flex:1;font-size:11px;color:#fff;font-weight:600;letter-spacing:1.2px}
+.mock-progress{
+  background:linear-gradient(90deg,var(--teal),var(--teal-bright));
+  padding:10px 18px;display:flex;align-items:center;gap:14px;
+}
+.mock-progress-lbl{font-size:9px;font-weight:700;color:#fff;letter-spacing:1px;text-transform:uppercase}
+.mock-progress-bar{flex:1;height:6px;background:rgba(255,255,255,.25);border-radius:3px;overflow:hidden;position:relative}
+.mock-progress-fill{
+  height:100%;width:62%;background:#fff;border-radius:3px;position:relative;overflow:hidden;
+}
+.mock-progress-fill::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.7),transparent);
+  background-size:80px 100%;animation:shimmer 2s infinite;
+}
+.mock-progress-pct{font-size:12px;font-weight:700;color:#fff}
+.mock-body{flex:1;padding:14px 18px;display:flex;flex-direction:column;gap:8px;overflow:hidden}
+.mock-row{display:flex;align-items:center;gap:10px;font-size:11px}
+.mock-row-name{flex:0 0 38%;color:var(--text);font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mock-pill{
+  font-size:9px;font-weight:600;padding:3px 8px;border-radius:10px;
+  letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;
+}
+.mock-pill.done{background:var(--green-bg);color:var(--green)}
+.mock-pill.prog{background:#FEF3C7;color:#A16207}
+.mock-pill.pend{background:#F1F5F9;color:#64748B}
+.mock-bar-track{flex:1;height:8px;background:#F1F5F9;border-radius:4px;overflow:hidden}
+.mock-bar-fill{height:100%;border-radius:4px}
+.mock-bar-fill.b1{width:100%;background:var(--green)}
+.mock-bar-fill.b2{width:75%;background:var(--teal)}
+.mock-bar-fill.b3{width:48%;background:var(--teal)}
+.mock-bar-fill.b4{width:18%;background:#94A3B8}
+
+/* ═══════════════════════ COMPARAÇÃO ═══════════════════════ */
+.compare{background:linear-gradient(180deg,#FAFCFE 0%,#fff 100%)}
+.compare-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:28px;
+  max-width:980px;margin:0 auto;
+}
+.compare-col{
+  background:#fff;border-radius:14px;padding:30px 28px;
+  border:2px solid var(--border);
+}
+.compare-col.bad{
+  background:#FFFAFA;border-color:#FCD7D4;
+}
+.compare-col.good{
+  background:linear-gradient(180deg,#F0F9FB 0%,#fff 100%);
+  border-color:var(--teal);
+  box-shadow:0 14px 40px rgba(26,122,154,.15);
+  position:relative;
+}
+.compare-col.good::before{
+  content:"Plan&jar";font-family:'Poppins',sans-serif;
+  position:absolute;top:-13px;left:50%;transform:translateX(-50%);
+  background:linear-gradient(135deg,var(--teal),var(--teal-bright));
+  color:#fff;font-size:11px;font-weight:700;
+  padding:5px 14px;border-radius:14px;letter-spacing:1.5px;text-transform:uppercase;
+  box-shadow:0 4px 12px rgba(26,122,154,.4);
+}
+.compare-head{
+  display:flex;align-items:center;gap:12px;margin-bottom:20px;
+  padding-bottom:18px;border-bottom:1px solid var(--border);
+}
+.compare-head-icon{
+  width:38px;height:38px;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+}
+.compare-col.bad .compare-head-icon{background:var(--red-bg);color:var(--red)}
+.compare-col.good .compare-head-icon{background:var(--green-bg);color:var(--green)}
+.compare-head-title{font-size:16px;font-weight:600;color:var(--text)}
+.compare-head-sub{font-size:11px;color:var(--muted);margin-top:2px;letter-spacing:.3px}
+.compare-list{display:flex;flex-direction:column;gap:14px}
+.compare-item{display:flex;gap:12px;align-items:flex-start;font-size:13.5px;color:var(--text);line-height:1.5}
+.compare-item-mark{
+  flex-shrink:0;width:20px;height:20px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;font-weight:700;
+  font-size:12px;margin-top:1px;
+}
+.compare-col.bad .compare-item-mark{background:var(--red-bg);color:var(--red)}
+.compare-col.good .compare-item-mark{background:var(--green-bg);color:var(--green)}
+
+/* ═══════════════════════ CTA ═══════════════════════ */
+.cta{
+  background:
+    radial-gradient(ellipse at 30% 50%,rgba(26,122,154,.30),transparent 60%),
+    linear-gradient(135deg,var(--navy-dark),var(--navy));
+  padding:80px 28px;text-align:center;color:#fff;
+  position:relative;overflow:hidden;
+}
+.cta::before{
+  content:"";position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;
+  mask-image:radial-gradient(ellipse at center,black,transparent 70%);
+}
+.cta-inner{max-width:760px;margin:0 auto;position:relative}
+.cta-eyebrow{
+  font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:var(--teal-bright);margin-bottom:14px;
+}
+.cta-title{
+  font-size:34px;font-weight:700;line-height:1.2;
+  color:#fff;margin-bottom:16px;letter-spacing:-.5px;
+}
+.cta-sub{
+  font-size:15px;color:rgba(255,255,255,.78);line-height:1.6;
+  max-width:600px;margin:0 auto 32px;
+}
+.cta-buttons{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+
+/* ═══════════════════════ CONTATO ═══════════════════════ */
+.contact{padding:70px 28px}
+.contact-inner{max-width:1200px;margin:0 auto}
+.contact-narrow{max-width:540px;margin:0 auto}
+.contact-card{
+  background:linear-gradient(180deg,#fff 0%,#F4F7FA 100%);
+  border:1px solid var(--border);border-radius:14px;
+  padding:36px;text-align:center;
+}
+.contact-icon{
+  width:56px;height:56px;border-radius:14px;
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 18px;
+}
+.contact-title{font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--teal);margin-bottom:10px}
+.contact-text{font-size:15px;color:var(--text);line-height:1.6;margin-bottom:20px}
+.wa-btn{
+  display:inline-flex;align-items:center;gap:10px;
+  background:#25D366;color:#fff;text-decoration:none;
+  padding:13px 26px;border-radius:8px;
+  font-size:14px;font-weight:600;letter-spacing:.3px;
+  box-shadow:0 6px 18px rgba(37,211,102,.3);
+  transition:all .2s;
+}
+.wa-btn:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(37,211,102,.45);background:#22c35e}
+
+/* ═══════════════════════ FOOTER ═══════════════════════ */
+.footer{
+  background:var(--navy-deeper);padding:32px 28px;
+  display:flex;justify-content:center;align-items:center;
+  border-top:1px solid rgba(255,255,255,.05);
+}
+.footer-text{font-size:11px;color:rgba(255,255,255,.45);letter-spacing:.5px;text-align:center}
+
+/* ═══════════════════════ STATUS BAR ═══════════════════════ */
+.status-bar{
+  position:fixed;bottom:16px;left:50%;transform:translateX(-50%);
+  background:var(--navy-dark);color:#fff;padding:8px 18px;border-radius:20px;
+  font-size:11px;font-weight:500;letter-spacing:.5px;
+  box-shadow:0 8px 24px rgba(0,0,0,.3);opacity:0;transition:opacity .3s;
+  display:flex;align-items:center;gap:8px;pointer-events:none;z-index:9999;
+}
+.status-bar.show{opacity:1}
+.status-bar .dot{width:7px;height:7px;border-radius:50%;background:#69F0AE;box-shadow:0 0 8px rgba(105,240,174,.6)}
+.status-bar.error .dot{background:#FF8A80}
+
+/* ═══════════════════════ RESPONSIVE ═══════════════════════ */
+@media (max-width:980px){
+  .hero-inner{grid-template-columns:1fr;gap:40px}
+  .hero-title{font-size:38px}
+  .pillars{grid-template-columns:1fr}
+  .features-grid{grid-template-columns:1fr 1fr}
+  .pain-grid{grid-template-columns:1fr}
+  .steps{grid-template-columns:1fr}
+  .steps::before{display:none}
+  .showcase-grid{grid-template-columns:1fr;gap:32px}
+  .compare-grid{grid-template-columns:1fr}
+  .trust-inner{grid-template-columns:repeat(2,1fr);gap:24px}
+}
+@media (max-width:640px){
+  .nav-links{display:none}
+  .nav-links.open{display:flex;position:absolute;top:100%;left:0;right:0;background:var(--navy-dark);flex-direction:column;padding:14px;gap:4px;border-bottom:1px solid rgba(255,255,255,.08);animation:slideDown .25s ease}
+  .nav-links.open .nav-link,.nav-links.open .nav-cta{width:100%;text-align:center;justify-content:center}
+  .nav-toggle{display:block}
+  .hero{padding:50px 20px 60px}
+  .hero-title{font-size:30px}
+  .hero-sub{font-size:14px}
+  .section,.pain{padding:60px 20px}
+  .sec-title,.pain-title{font-size:26px}
+  .features-grid{grid-template-columns:1fr}
+  .cta-title{font-size:24px}
+  .trust-num{font-size:24px}
+  .nav-brand-name{font-size:16px}
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════ NAVBAR ═══════════════════ -->
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="#top" class="nav-brand">
+      <div class="nav-logo">
+        <span class="logo-text" style="font-size:13px"><span class="lp">P</span><span class="lamp">&amp;</span><span class="lj">j</span></span>
+      </div>
+      <div>
+        <div class="nav-brand-name">
+          <span class="logo-text"><span class="lp">Plan</span><span class="lamp">&amp;</span><span class="lj">jar</span></span>
+        </div>
+        <div class="nav-brand-tag">obra com lucro previsível</div>
+      </div>
+    </a>
+    <div class="nav-spacer"></div>
+    <button class="nav-toggle" id="nav-toggle" aria-label="Menu">☰</button>
+    <div class="nav-links" id="nav-links">
+      <a href="#problema" class="nav-link">O problema</a>
+      <a href="#solucao" class="nav-link">Solução</a>
+      <a href="#how" class="nav-link">Como funciona</a>
+      <a href="#contato" class="nav-link">Contato</a>
+      <a href="#acesso" class="nav-cta">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        Acessar obra
+      </a>
+    </div>
+  </div>
+</nav>
+
+<!-- ═══════════════════ HERO ═══════════════════ -->
+<section class="hero" id="top">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-eyebrow">
+        <span class="pulse"></span>
+        Para construtoras cansadas de "perder lucro no caminho"
+      </div>
+      <h1 class="hero-title">
+        Pare de descobrir <span class="strike">no fim da obra</span><br>
+        que ela <span class="accent">não deu o lucro previsto</span>.
+      </h1>
+      <p class="hero-sub">
+        <strong>Plan&amp;jar</strong> é o sistema que mostra, <strong>todo dia</strong>, onde a obra está saindo do plano — antes do prejuízo virar surpresa. Cronograma físico, financeiro por <strong>potes de meta</strong> e medições automáticas físico×financeiro <strong>na mesma tela</strong>. Sua equipe opera com método. Seu cliente acompanha em tempo real. E sua margem deixa de ser "o que sobrou".
+      </p>
+      <div class="hero-actions">
+        <a href="#acesso" class="btn-hero-primary">
+          Acessar minha obra
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+        </a>
+        <a href="#solucao" class="btn-hero-secondary">Ver como funciona</a>
+      </div>
+      <div class="hero-badges">
+        <div class="hero-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Sem instalar nada
+        </div>
+        <div class="hero-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Cliente entra com 1 código
+        </div>
+        <div class="hero-badge">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Personalizado com sua marca
+        </div>
+      </div>
+    </div>
+
+    <!-- ACESSO CARD -->
+    <div class="access-card" id="acesso">
+      <div class="access-top">
+        <div class="access-top-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </div>
+        <div class="access-top-text">
+          <div class="access-top-title">Área de acesso</div>
+          <div class="access-top-sub">Cliente · Construtora</div>
+        </div>
+      </div>
+      <div class="access-body">
+        <div class="access-tabs">
+          <button class="access-tab active" data-tab="cliente" onclick="switchTab('cliente')">Sou cliente</button>
+          <button class="access-tab" data-tab="admin" onclick="switchTab('admin')">Construtora</button>
+        </div>
+
+        <!-- CLIENTE -->
+        <div class="access-pane active" id="pane-cliente">
+          <div class="access-title">Acompanhe sua obra</div>
+          <div class="access-sub">Digite o código que você recebeu da construtora pra ver cronograma e progresso em tempo real.</div>
+
+          <div class="field-row">
+            <label class="field-lbl" for="code">Código de acesso</label>
+            <input id="code" class="input uppercase" type="text" placeholder="CÓDIGO" maxlength="20" autocomplete="off" spellcheck="false">
+            <div id="hint" class="hint">Ex: OBRA-001 — código fornecido pela construtora.</div>
+          </div>
+
+          <button id="enter-btn" class="btn">
+            <span id="enter-label">Entrar na obra</span>
+          </button>
+        </div>
+
+        <!-- ADMIN -->
+        <div class="access-pane" id="pane-admin">
+          <div class="access-title">Painel da construtora</div>
+          <div class="access-sub">Cadastre obras, gerencie cronogramas, financeiro e equipe. Tudo com sua marca pro cliente.</div>
+
+          <a class="btn" href="admin.html" style="text-decoration:none">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            <span>Ir para o painel</span>
+          </a>
+          <div class="hint" style="margin-top:14px;text-align:center">Login com email e senha na próxima tela. Cada construtora pode ter vários usuários no mesmo painel.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ TRUST BAR ═══════════════════ -->
+<section class="trust">
+  <div class="trust-inner">
+    <div class="trust-item">
+      <div class="trust-num">3 em 1</div>
+      <div class="trust-lbl">Cronograma · Financeiro · Medições</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-num">Tempo real</div>
+      <div class="trust-lbl">Equipe e cliente na mesma página</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-num">Sua marca</div>
+      <div class="trust-lbl">White-label completo pro cliente</div>
+    </div>
+    <div class="trust-item">
+      <div class="trust-num">Sem app</div>
+      <div class="trust-lbl">Roda no navegador, no celular ou PC</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ DOR / PROBLEMA ═══════════════════ -->
+<section class="pain" id="problema">
+  <div class="pain-inner">
+    <div class="pain-eyebrow">O problema que ninguém fala em voz alta</div>
+    <h2 class="pain-title">A obra terminou. Onde foi parar o lucro?</h2>
+    <p class="pain-sub">
+      Você fechou no preço certo. A obra entregou. Mas quando bate o caixa no fim, sobra muito menos do que deveria — ou nada. Isso não é azar, é falta de visibilidade <em>durante</em> a obra. E custa caro.
+    </p>
+
+    <div class="pain-grid">
+      <div class="pain-card">
+        <div class="pain-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>
+        </div>
+        <div class="pain-card-quote">"O orçamento está numa planilha. O cronograma está em outra. As notas fiscais, num grupo de WhatsApp."</div>
+        <div class="pain-card-cost">→ Ninguém enxerga a obra inteira</div>
+      </div>
+
+      <div class="pain-card">
+        <div class="pain-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+        </div>
+        <div class="pain-card-quote">"O cliente liga toda semana perguntando 'como tá a obra?'. A gente perde meia hora explicando."</div>
+        <div class="pain-card-cost">→ Atendimento vira atrito</div>
+      </div>
+
+      <div class="pain-card">
+        <div class="pain-card-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v18H3z"/><path d="M3 9h18"/><path d="M9 21V9"/></svg>
+        </div>
+        <div class="pain-card-quote">"Só descobri que estourou o material quando o pedreiro pediu mais cimento — e o dinheiro do mês já tinha ido."</div>
+        <div class="pain-card-cost">→ Margem vira surpresa no fim</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ SOLUÇÃO (3 PILARES) ═══════════════════ -->
+<section class="section solution" id="solucao">
+  <div class="section-inner">
+    <div class="sec-eyebrow">A solução, em 3 pilares</div>
+    <h2 class="sec-title">A obra inteira em uma tela. Todo dia. Pra todo mundo.</h2>
+    <p class="sec-sub">Plan&amp;jar não é planilha bonita nem ERP pesado. É a coluna vertebral da sua obra: cronograma, dinheiro e progresso falando entre si — e mostrando, na hora, quando algo sai do plano.</p>
+
+    <div class="pillars">
+      <div class="pillar">
+        <div class="pillar-num">1</div>
+        <div class="pillar-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="pillar-title">Cronograma que enxerga o caminho crítico sozinho</div>
+        <div class="pillar-text">
+          Importe a planilha de atividades — ou edite direto na tela. O sistema separa <strong>projeto</strong> de <strong>obra</strong> automaticamente, identifica o <strong>caminho crítico</strong> e te avisa onde um atraso de um dia atrasa a entrega inteira.
+        </div>
+        <div class="pillar-result">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Você vê o atraso antes dele acontecer
+        </div>
+      </div>
+
+      <div class="pillar">
+        <div class="pillar-num">2</div>
+        <div class="pillar-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 12h-11z"/><path d="M9 8V5a3 3 0 0 1 6 0v3"/></svg>
+        </div>
+        <div class="pillar-title">Financeiro por potes — o lucro é o primeiro a entrar</div>
+        <div class="pillar-text">
+          Antes do primeiro cimento, você divide a obra em <strong>potes de meta</strong>: Material, Mão de obra, Taxas e Impostos, e <strong>Lucro</strong>. Cada gasto entra num pote e o sistema mostra, em tempo real, qual está apertando.
+        </div>
+        <div class="pillar-result">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Lucro deixa de ser "o que sobrou"
+        </div>
+      </div>
+
+      <div class="pillar">
+        <div class="pillar-num">3</div>
+        <div class="pillar-icon">
+          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+        </div>
+        <div class="pillar-title">Medição físico×financeiro automática</div>
+        <div class="pillar-text">
+          Cada serviço tem um valor cobrado e um realizado. Quando a equipe atualiza o avanço da atividade, o sistema calcula <strong>quanto deveria ter sido medido</strong> — pronto pro boletim, pra contabilidade e pro cliente.
+        </div>
+        <div class="pillar-result">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Acabou planilha de medição na mão
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ COMPARAÇÃO ═══════════════════ -->
+<section class="section compare">
+  <div class="section-inner">
+    <div class="sec-eyebrow">Antes vs. depois</div>
+    <h2 class="sec-title">A diferença está no que você vê no dia 30 de cada mês</h2>
+    <p class="sec-sub">Não é que sua construtora não trabalhe. É que sem visibilidade, você gasta 90% do tempo apagando incêndios — e o resto descobrindo que faltou dinheiro.</p>
+
+    <div class="compare-grid">
+      <div class="compare-col bad">
+        <div class="compare-head">
+          <div class="compare-head-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+          <div>
+            <div class="compare-head-title">Sem método</div>
+            <div class="compare-head-sub">Como muita construtora ainda opera</div>
+          </div>
+        </div>
+        <div class="compare-list">
+          <div class="compare-item"><div class="compare-item-mark">×</div>Planilhas dispersas que ninguém consegue manter atualizadas</div>
+          <div class="compare-item"><div class="compare-item-mark">×</div>Cliente liga toda semana — explicação manual</div>
+          <div class="compare-item"><div class="compare-item-mark">×</div>Lucro só aparece (ou some) no fim da obra</div>
+          <div class="compare-item"><div class="compare-item-mark">×</div>Atrasos descobertos quando já viraram problema</div>
+          <div class="compare-item"><div class="compare-item-mark">×</div>Medição feita à mão, mês a mês</div>
+          <div class="compare-item"><div class="compare-item-mark">×</div>Equipe e cliente operam com versões diferentes</div>
+        </div>
+      </div>
+
+      <div class="compare-col good">
+        <div class="compare-head">
+          <div class="compare-head-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          </div>
+          <div>
+            <div class="compare-head-title">Com Plan&amp;jar</div>
+            <div class="compare-head-sub">Operação previsível e auditável</div>
+          </div>
+        </div>
+        <div class="compare-list">
+          <div class="compare-item"><div class="compare-item-mark">✓</div>Tudo numa única tela, em tempo real</div>
+          <div class="compare-item"><div class="compare-item-mark">✓</div>Cliente acompanha sozinho — link com sua marca</div>
+          <div class="compare-item"><div class="compare-item-mark">✓</div>Lucro definido como pote no dia 1 e blindado</div>
+          <div class="compare-item"><div class="compare-item-mark">✓</div>Caminho crítico em destaque, atraso visível na hora</div>
+          <div class="compare-item"><div class="compare-item-mark">✓</div>Medição calculada automaticamente do avanço físico</div>
+          <div class="compare-item"><div class="compare-item-mark">✓</div>Engenheiro, mestre, financeiro e diretoria, mesma verdade</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ FEATURES ═══════════════════ -->
+<section class="section">
+  <div class="section-inner">
+    <div class="sec-eyebrow">O que vem dentro</div>
+    <h2 class="sec-title">Tudo que sua obra precisa, sem a complexidade que ninguém usa</h2>
+    <p class="sec-sub">A gente cortou o que não importa e deixou só o que move o ponteiro: cronograma, dinheiro, equipe e cliente — falando a mesma língua.</p>
+
+    <div class="features-grid">
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="feature-title">Gantt interativo com caminho crítico</div>
+        <div class="feature-text">Arraste as barras pra ajustar prazos. O sistema detecta o caminho crítico e separa projeto de obra automaticamente.</div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 12h-11z"/><path d="M9 8V5a3 3 0 0 1 6 0v3"/></svg>
+        </div>
+        <div class="feature-title">Potes de meta de %</div>
+        <div class="feature-text">Material, Mão de obra, Taxas e Impostos, Lucro — já vêm prontos. Personalize, adicione novos, ajuste % e veja a margem se preencher em tempo real.</div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+        </div>
+        <div class="feature-title">Físico × financeiro automático</div>
+        <div class="feature-text">Avanço físico × valor do serviço = medição pronta. Sem planilha paralela, sem fórmula esquecida.</div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+        </div>
+        <div class="feature-title">Relatórios e gráficos</div>
+        <div class="feature-text">Dashboards de gasto por pote, evolução mensal, projeção de margem e exportação em PDF — direto a partir dos lançamentos do financeiro.</div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9c0 .55.34 1.05.85 1.27.46.2.84.6.85 1.13"/></svg>
+        </div>
+        <div class="feature-title">Visão filtrada pro cliente</div>
+        <div class="feature-text">O cliente acompanha cronograma e o que foi entregue. Lucro, gasto real e custos internos ficam só com sua equipe — onde devem ficar.</div>
+      </div>
+
+      <div class="feature">
+        <div class="feature-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        </div>
+        <div class="feature-title">White-label completo</div>
+        <div class="feature-text">A obra abre com seu nome, sua cor e seu logo. Plan&amp;jar fica nos bastidores — a marca que importa é a sua.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ HOW IT WORKS (CLIENTE) ═══════════════════ -->
+<section class="section how" id="how">
+  <div class="section-inner">
+    <div class="sec-eyebrow">Pra começar do zero</div>
+    <h2 class="sec-title">Da planilha à obra acompanhada — em 3 passos</h2>
+    <p class="sec-sub">Sem instalar app, sem treinamento longo, sem suíte de software pesada. Em uma tarde sua primeira obra está rodando.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-title">Importe a planilha</div>
+        <div class="step-text">Suba a planilha de atividades (ou crie direto na tela). O sistema separa projeto de obra e detecta o caminho crítico sozinho.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-title">Defina os potes</div>
+        <div class="step-text">Material, Mão de obra, Taxas e Impostos e Lucro já vêm prontos. Ajuste os % do orçamento e o sistema calcula o R$ disponível em cada um.</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-title">Compartilhe com o cliente</div>
+        <div class="step-text">Envie um código. Ele entra direto, vê cronograma e progresso — sem ver lucro, gasto real ou nada interno.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ SHOWCASE ═══════════════════ -->
+<section class="section">
+  <div class="section-inner">
+    <div class="showcase-grid">
+      <div class="showcase-text">
+        <div class="sec-eyebrow" style="text-align:left;margin-bottom:10px">Visão completa do projeto</div>
+        <h2 class="sec-title" style="text-align:left;margin-bottom:14px">A obra inteira, sem precisar abrir 4 abas</h2>
+        <p style="font-size:14px;color:var(--muted);line-height:1.7;margin-bottom:6px">
+          Numa tela só: avanço geral, etapas em andamento, atividades pendentes, potes do orçamento e medições do mês. Equipe e cliente veem o mesmo dado, atualizado na hora.
+        </p>
+
+        <div class="showcase-list">
+          <div class="showcase-item">
+            <div class="showcase-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="showcase-item-text">
+              <strong>Três painéis integrados</strong>
+              <span>Cronograma físico, financeiro por potes e medições físico×financeiro — tudo respirando o mesmo dado.</span>
+            </div>
+          </div>
+          <div class="showcase-item">
+            <div class="showcase-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="showcase-item-text">
+              <strong>Status por atividade</strong>
+              <span>Pendente · Em Andamento · Concluído. Um clique, equipe e cliente atualizados.</span>
+            </div>
+          </div>
+          <div class="showcase-item">
+            <div class="showcase-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="showcase-item-text">
+              <strong>Alerta antes do estouro</strong>
+              <span>Quando o pote chega em 85% e em 100% — você vê na hora, não no fim do mês.</span>
+            </div>
+          </div>
+          <div class="showcase-item">
+            <div class="showcase-check">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            </div>
+            <div class="showcase-item-text">
+              <strong>Imprime ou exporta PDF</strong>
+              <span>Boletim do mês, cronograma e medições — sempre prontos pra cliente, banco ou contabilidade.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="showcase-visual float-anim">
+        <div class="mock">
+          <div class="mock-header">
+            <div class="mock-header-logo">
+              <span class="logo-text" style="font-size:11px"><span class="lp">P</span><span class="lamp">&amp;</span><span class="lj">j</span></span>
+            </div>
+            <div class="mock-header-text">RESIDÊNCIA VILA NOVA</div>
+          </div>
+          <div class="mock-progress">
+            <div class="mock-progress-lbl">Progresso</div>
+            <div class="mock-progress-bar"><div class="mock-progress-fill"></div></div>
+            <div class="mock-progress-pct">62%</div>
+          </div>
+          <div class="mock-body">
+            <div class="mock-row">
+              <div class="mock-row-name">Projeto arquitetônico</div>
+              <div class="mock-pill done">✓ Pronto</div>
+              <div class="mock-bar-track"><div class="mock-bar-fill b1"></div></div>
+            </div>
+            <div class="mock-row">
+              <div class="mock-row-name">Aprovação prefeitura</div>
+              <div class="mock-pill done">✓ Pronto</div>
+              <div class="mock-bar-track"><div class="mock-bar-fill b1"></div></div>
+            </div>
+            <div class="mock-row">
+              <div class="mock-row-name">Fundação</div>
+              <div class="mock-pill prog">Em andamento</div>
+              <div class="mock-bar-track"><div class="mock-bar-fill b2"></div></div>
+            </div>
+            <div class="mock-row">
+              <div class="mock-row-name">Estrutura</div>
+              <div class="mock-pill prog">Em andamento</div>
+              <div class="mock-bar-track"><div class="mock-bar-fill b3"></div></div>
+            </div>
+            <div class="mock-row">
+              <div class="mock-row-name">Alvenaria</div>
+              <div class="mock-pill pend">Pendente</div>
+              <div class="mock-bar-track"><div class="mock-bar-fill b4"></div></div>
+            </div>
+            <div class="mock-row">
+              <div class="mock-row-name">Acabamento</div>
+              <div class="mock-pill pend">Pendente</div>
+              <div class="mock-bar-track"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ CTA ═══════════════════ -->
+<section class="cta">
+  <div class="cta-inner">
+    <div class="cta-eyebrow">Pronto pra começar</div>
+    <h2 class="cta-title">Sua próxima obra pode dar lucro previsível.</h2>
+    <p class="cta-sub">Se você é cliente e já recebeu seu código, é só clicar em "acessar". Se você é construtora e quer levar essa metodologia pra sua operação, fale com a gente — em uma tarde sua primeira obra está no ar com sua marca.</p>
+    <div class="cta-buttons">
+      <a href="#acesso" class="btn-hero-primary">
+        Acessar agora
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+      <a href="#contato" class="btn-hero-secondary">Quero conhecer o sistema</a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ CONTATO ═══════════════════ -->
+<section class="contact" id="contato">
+  <div class="contact-inner contact-narrow">
+    <div class="contact-card">
+      <div class="contact-icon" style="background:#E8F5EE;color:var(--green)">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+      </div>
+      <div class="contact-title">Contato</div>
+      <div class="contact-text">
+        Quer ver o sistema rodando, levar pra sua construtora<br>
+        ou só tirar uma dúvida? Fala comigo no WhatsApp:
+      </div>
+      <a href="https://wa.me/5541999595824" target="_blank" rel="noopener" class="wa-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        (41) 99959-5824
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════ FOOTER ═══════════════════ -->
+<footer class="footer">
+  <div class="footer-text">
+    © 2026 <span class="logo-text" style="font-size:11px;color:rgba(255,255,255,.7)"><span class="lp">Plan</span><span class="lamp">&amp;</span><span class="lj">jar</span></span> · Construa com lucro previsível
+  </div>
+</footer>
+
+<div id="status-bar" class="status-bar"><span class="dot"></span><span id="status-text">Conectando…</span></div>
+
+<!-- ═══════════════════ FIREBASE ═══════════════════ -->
+<script type="module">
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBJoDou1VsHAIAbVjESOGVh23dezmLETrE",
+  authDomain: "franco-e-fragoso-advocacia.firebaseapp.com",
+  databaseURL: "https://franco-e-fragoso-advocacia-default-rtdb.firebaseio.com",
+  projectId: "franco-e-fragoso-advocacia",
+  storageBucket: "franco-e-fragoso-advocacia.firebasestorage.app",
+  messagingSenderId: "1096895063248",
+  appId: "1:1096895063248:web:68a5c866e229124f3faad5"
+};
+
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+const app = initializeApp(FIREBASE_CONFIG);
+const db = getDatabase(app);
+
+window.__TAILORED__ = { db, ref, get };
+window.dispatchEvent(new CustomEvent('fb-ready'));
+</script>
+
+<script>
+/* ─── NAV ─── */
+document.getElementById('nav-toggle').addEventListener('click', () => {
+  document.getElementById('nav-links').classList.toggle('open');
+});
+document.querySelectorAll('.nav-link, .nav-cta').forEach(a => {
+  a.addEventListener('click', () => document.getElementById('nav-links').classList.remove('open'));
+});
+
+/* ─── TABS ─── */
+function switchTab(name) {
+  document.querySelectorAll('.access-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.access-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + name));
+}
+window.switchTab = switchTab;
+
+/* ─── ACESSO ─── */
+const codeInput = document.getElementById('code');
+const btn = document.getElementById('enter-btn');
+const btnLabel = document.getElementById('enter-label');
+const hint = document.getElementById('hint');
+const statusBar = document.getElementById('status-bar');
+const statusText = document.getElementById('status-text');
+
+function setStatus(text, kind) {
+  statusText.textContent = text;
+  statusBar.className = 'status-bar show' + (kind ? ' ' + kind : '');
+  clearTimeout(setStatus._t);
+  setStatus._t = setTimeout(() => statusBar.classList.remove('show'), 2400);
+}
+
+function setHint(text, err) {
+  hint.textContent = text;
+  hint.className = 'hint' + (err ? ' err' : '');
+}
+
+function setLoading(loading) {
+  btn.disabled = loading;
+  if (loading) {
+    btnLabel.innerHTML = '<span class="spin"></span>&nbsp;Verificando…';
+  } else {
+    btnLabel.textContent = 'Entrar na obra';
+  }
+}
+
+function normalize(raw) {
+  return (raw || '').trim().toUpperCase().replace(/\s+/g,'');
+}
+
+codeInput.addEventListener('input', (e) => {
+  const pos = e.target.selectionStart;
+  e.target.value = e.target.value.toUpperCase();
+  e.target.setSelectionRange(pos, pos);
+  e.target.classList.remove('error');
+});
+
+codeInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); onEnter(); }
+});
+
+btn.addEventListener('click', onEnter);
+
+async function onEnter() {
+  const code = normalize(codeInput.value);
+  if (!code) {
+    codeInput.classList.add('error');
+    setHint('Digite um código para continuar', true);
+    codeInput.focus();
+    return;
+  }
+  if (!window.__TAILORED__) {
+    setHint('Conectando ao servidor, tente novamente em instantes…', true);
+    return;
+  }
+
+  setLoading(true);
+  setHint('Verificando código…', false);
+
+  try {
+    const { db, ref, get } = window.__TAILORED__;
+    const snap = await get(ref(db, 'codes/' + code));
+    const data = snap.val();
+    if (!data || !data.obraId || data.ativo === false) {
+      codeInput.classList.add('error');
+      setHint('Código não encontrado ou desativado. Verifique com a construtora.', true);
+      setLoading(false);
+      return;
+    }
+    setStatus('Acesso liberado', '');
+    try { sessionStorage.setItem('planjar_last_code', code); } catch(e){}
+    window.location.href = `obra.html?id=${encodeURIComponent(data.obraId)}&code=${encodeURIComponent(code)}`;
+  } catch (err) {
+    console.error(err);
+    setHint('Erro de conexão. Tente novamente.', true);
+    setStatus('Sem conexão', 'error');
+    setLoading(false);
+  }
+}
+
+/* Pré-preenche se veio com ?code= na URL */
+const urlCode = new URLSearchParams(window.location.search).get('code');
+if (urlCode) {
+  codeInput.value = urlCode.toUpperCase();
+  setTimeout(onEnter, 400);
+}
+
+window.addEventListener('fb-ready', () => {
+  setStatus('Conectado', '');
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,3902 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="version" content="2026-04-23-v2">
+<title>Acompanhamento de Obra — Plan&amp;jar</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1C3D5A;--navy-dark:#122738;--navy-light:#2A5580;
+  --teal:#1A7A9A;--teal-light:#D6EEF6;
+  --green:#1A8A55;--green-bg:#E8F5EE;--green-deep:#0E4A2E;
+  --orange:#C05A00;--orange-bg:#FEF3E2;
+  --red:#C0392B;--red-bg:#FDECEA;
+  --gray:#6B7F90;--gray-bg:#F4F7FA;
+  --border:#D0DDE8;--bg:#EDF2F7;--white:#FFFFFF;
+  --text:#1A2D3D;--muted:#6B8296;
+  --bar-proj:#2A7DBF;--bar-obra:#1A8A55;--bar-crit:#C05A00;
+  --row-alt:#F7FAFD;
+}
+html,body{overflow-x:hidden}
+body{font-family:'Poppins',system-ui,sans-serif;background:var(--bg);min-height:100vh;padding:0;-webkit-font-smoothing:antialiased;animation:fadeInPage .6s ease both}
+
+/* ─── LOGO Plan&jar (visualmente parece "Planejar") ─── */
+.logo-text{
+  font-family:'Poppins',sans-serif;
+  font-weight:700;
+  letter-spacing:-.4px;
+  line-height:1;
+  display:inline-flex;
+  align-items:baseline;
+  white-space:nowrap;
+}
+.logo-text .lamp{
+  font-weight:600;
+  margin:0 -.05em;
+  transform:translateY(-.06em);
+  font-size:.88em;
+  opacity:.92;
+}
+
+/* ─── BRAND THEME (preenchido via applyBranding()) ─── */
+.brand-logo-fallback{
+  width:54px;height:54px;flex-shrink:0;border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-weight:700;font-size:22px;letter-spacing:.5px;
+  background:linear-gradient(135deg,var(--brand-color, var(--teal)),var(--navy-light));
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+}
+.brand-logo-img{
+  width:54px;height:54px;flex-shrink:0;border-radius:8px;object-fit:contain;
+  background:#fff;padding:4px;
+  filter:drop-shadow(0 2px 6px rgba(0,0,0,0.25));
+}
+
+@keyframes fadeInPage{from{opacity:0}to{opacity:1}}
+@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes growBar{from{transform:translateY(-50%) scaleX(0);transform-origin:left}to{transform:translateY(-50%) scaleX(1);transform-origin:left}}
+@keyframes pulseDone{0%{box-shadow:0 0 0 0 rgba(26,138,85,0.55)}70%{box-shadow:0 0 0 10px rgba(26,138,85,0)}100%{box-shadow:0 0 0 0 rgba(26,138,85,0)}}
+@keyframes savedPop{0%{transform:scale(.8);opacity:0}40%{transform:scale(1.05);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes shimmer{0%{background-position:-200px 0}100%{background-position:200px 0}}
+@keyframes pulseLive{0%,100%{opacity:.5}50%{opacity:1}}
+
+.shell{max-width:1380px;margin:0 auto;padding:24px}
+
+/* ─── LOADING SCREEN ─── */
+.loading-screen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:10000;flex-direction:column;gap:18px;transition:opacity .4s}
+.loading-screen.hide{opacity:0;pointer-events:none}
+.loader{width:46px;height:46px;border:3px solid var(--border);border-top-color:var(--teal);border-radius:50%;animation:spin .8s linear infinite}
+.loading-text{font-size:13px;color:var(--muted);letter-spacing:1px;text-transform:uppercase}
+
+/* ─── ERROR SCREEN ─── */
+.error-screen{max-width:480px;margin:80px auto;background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.1);padding:40px 36px;text-align:center}
+.error-screen .icon{font-size:48px;margin-bottom:18px}
+.error-screen h2{font-size:20px;color:var(--text);margin-bottom:10px}
+.error-screen p{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:22px}
+.error-screen a{display:inline-block;padding:11px 22px;background:var(--navy);color:#fff;text-decoration:none;border-radius:7px;font-size:12px;font-weight:600;letter-spacing:1px;text-transform:uppercase;transition:all .2s}
+.error-screen a:hover{background:var(--navy-dark);transform:translateY(-1px)}
+
+/* ─── HEADER ─── */
+.hdr{background:var(--navy-dark);border-radius:8px 8px 0 0;overflow:hidden;animation:slideDown .55s cubic-bezier(.2,.7,.3,1) both}
+.hdr-top{background:var(--navy);display:flex;align-items:stretch}
+.hdr-brand{padding:16px 26px;border-right:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:14px;min-width:230px}
+.brand-text{display:flex;flex-direction:column;gap:3px}
+.brand-name{font-size:15px;font-weight:600;color:#fff;letter-spacing:4px;text-transform:uppercase;line-height:1}
+.brand-tag{font-size:7.5px;color:rgba(255,255,255,0.5);letter-spacing:2px;text-transform:uppercase}
+.hdr-center{flex:1;padding:16px 28px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.hdr-eyebrow{font-size:9px;letter-spacing:2.5px;text-transform:uppercase;color:rgba(255,255,255,0.42);margin-bottom:5px}
+.hdr-title{font-size:18px;font-weight:600;color:#fff;line-height:1.25}
+.hdr-sub{font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px}
+.hdr-client{padding:14px 26px;border-left:1px solid rgba(255,255,255,0.1);display:flex;align-items:center;gap:14px;min-width:230px}
+.logo-ff{width:50px;height:50px;flex-shrink:0;border-radius:4px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:18px;letter-spacing:1px;background:linear-gradient(135deg,var(--teal),var(--navy-light));filter:drop-shadow(0 2px 6px rgba(0,0,0,0.25))}
+.client-text{min-width:0}
+.client-name{font-size:12.5px;font-weight:600;color:#fff;line-height:1.3}
+.client-sub{font-size:9px;color:rgba(255,255,255,0.5);letter-spacing:1.5px;text-transform:uppercase;margin-top:4px}
+.hdr-exit{display:inline-flex;align-items:center;gap:6px;margin-left:auto;padding:6px 12px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;text-decoration:none;border-radius:6px;font-size:10.5px;font-weight:500;letter-spacing:.5px;transition:all .2s}
+.hdr-exit:hover{background:rgba(255,255,255,.18)}
+
+/* ─── PROGRESS STRIP ─── */
+.prog-strip{background:linear-gradient(90deg,var(--teal),#22a0c4);padding:12px 28px;display:flex;align-items:center;gap:24px}
+.prog-label{font-size:11px;font-weight:600;color:#fff;letter-spacing:1px;text-transform:uppercase;white-space:nowrap}
+.prog-bar-track{flex:1;height:10px;background:rgba(255,255,255,0.2);border-radius:5px;overflow:hidden;position:relative}
+.prog-bar-fill{height:100%;background:#fff;border-radius:5px;transition:width .8s cubic-bezier(.4,.0,.2,1);position:relative;overflow:hidden}
+.prog-bar-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.6),transparent);background-size:200px 100%;animation:shimmer 2.5s infinite}
+.prog-pct{font-size:15px;font-weight:700;color:#fff;min-width:44px;text-align:right;transition:transform .3s}
+.today-badge{background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);border-radius:4px;padding:4px 12px;font-size:11px;color:#fff;white-space:nowrap}
+
+/* ─── KPI ROW ─── */
+.kpi-row{background:var(--navy-light);display:flex}
+.kpi{flex:1;padding:11px 20px;border-right:1px solid rgba(255,255,255,0.1);display:flex;flex-direction:column;justify-content:center;transition:background .2s}
+.kpi:hover{background:rgba(255,255,255,0.04)}
+.kpi:last-child{border-right:none}
+.kpi-val{font-size:16px;font-weight:700;color:#fff;line-height:1;transition:color .3s}
+.kpi-lbl{font-size:9px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:1px;margin-top:4px}
+.kpi-warn .kpi-val{color:#FFD54F}
+.kpi-done .kpi-val{color:#69F0AE}
+
+/* ─── CARD ─── */
+.card{background:#fff;box-shadow:0 8px 40px rgba(10,30,60,0.08);border-radius:0 0 8px 8px;overflow:hidden;animation:slideUp .55s cubic-bezier(.2,.7,.3,1) .1s both}
+
+/* Elementos visíveis apenas em modo admin */
+.admin-only{display:none}
+body.is-admin .admin-only{display:inline-flex}
+
+/* ─── FILTER BAR ─── */
+.filter-bar{padding:12px 28px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter-btn{border:1px solid var(--border);background:#fff;border-radius:6px;padding:6px 14px;font-size:11.5px;font-weight:500;color:var(--muted);cursor:pointer;font-family:'Poppins',sans-serif;transition:all .2s ease;display:inline-flex;align-items:center;gap:6px}
+.filter-btn:hover{border-color:var(--teal);color:var(--teal);transform:translateY(-1px);box-shadow:0 2px 8px rgba(26,122,154,0.15)}
+.filter-btn.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.filter-btn.active:hover{background:var(--navy-light);color:#fff}
+.filter-spacer{flex:1}
+.save-group{display:inline-flex;align-items:center;gap:8px;padding-left:10px;border-left:1px solid var(--border);margin-left:4px}
+.save-indicator{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:var(--green);padding:5px 10px;border-radius:20px;background:var(--green-bg);transition:all .3s}
+.save-indicator.saving{color:var(--muted);background:var(--gray-bg)}
+.save-indicator.offline{color:var(--orange);background:var(--orange-bg)}
+.save-indicator.error{color:var(--red);background:var(--red-bg)}
+.save-indicator .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+.save-indicator.saving .dot{border:2px solid currentColor;background:transparent;border-right-color:transparent;animation:spin .8s linear infinite}
+.save-indicator.live .dot{animation:pulseLive 1.6s ease-in-out infinite}
+.icon-btn{border:1px solid var(--border);background:#fff;border-radius:6px;padding:6px 10px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;font-family:'Poppins',sans-serif;transition:all .2s;display:inline-flex;align-items:center;gap:5px}
+.icon-btn:hover{border-color:var(--navy);color:var(--navy);transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+.notif-toggle{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:#fff;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:500;color:var(--muted);cursor:pointer;font-family:'Poppins',sans-serif;transition:all .2s}
+.notif-toggle:hover{border-color:var(--teal);color:var(--teal);transform:translateY(-1px)}
+.notif-toggle.on{background:var(--green-bg);color:var(--green-deep);border-color:var(--green)}
+
+/* ─── ADMIN BADGE ─── */
+.admin-badge{display:inline-flex;align-items:center;gap:6px;background:#FEF3E2;color:#8B4000;border:1px solid #E8C468;border-radius:20px;padding:4px 11px;font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase}
+.admin-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:#C05A00}
+
+/* ─── TOAST ─── */
+.toast-stack{position:fixed;top:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:10px;pointer-events:none}
+.toast{background:#fff;border-radius:10px;padding:14px 18px;min-width:280px;max-width:380px;box-shadow:0 12px 40px rgba(10,30,60,0.22),0 2px 8px rgba(0,0,0,0.08);display:flex;align-items:flex-start;gap:12px;animation:toastIn .4s cubic-bezier(.2,.7,.3,1);border-left:4px solid var(--green);pointer-events:auto}
+.toast.exit{animation:toastOut .35s ease forwards}
+.toast.info{border-left-color:var(--teal)}
+.toast.warn{border-left-color:var(--orange)}
+.toast.err{border-left-color:var(--red)}
+.toast-icon{width:32px;height:32px;border-radius:50%;background:var(--green-bg);color:var(--green);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.toast.info .toast-icon{background:var(--teal-light);color:var(--teal)}
+.toast.warn .toast-icon{background:var(--orange-bg);color:var(--orange)}
+.toast.err .toast-icon{background:var(--red-bg);color:var(--red)}
+.toast-body{flex:1;min-width:0}
+.toast-title{font-size:12.5px;font-weight:700;color:var(--text);margin-bottom:3px}
+.toast-msg{font-size:11.5px;color:var(--muted);line-height:1.4;word-wrap:break-word}
+.toast-close{background:transparent;border:none;color:var(--muted);font-size:16px;cursor:pointer;padding:0;line-height:1;flex-shrink:0}
+@keyframes toastIn{from{opacity:0;transform:translateX(30px) scale(.95)}to{opacity:1;transform:translateX(0) scale(1)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(30px) scale(.95)}}
+
+/* ─── GANTT TABLE ─── */
+.gantt-wrap{overflow-x:auto;padding:0}
+table.gantt{width:100%;border-collapse:collapse;table-layout:fixed;min-width:1100px}
+
+thead tr.row-months th{background:var(--navy);color:#fff;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:8px 12px;border-right:1px solid rgba(255,255,255,0.12)}
+thead tr.row-months th.th-tl{text-align:left}
+thead tr.row-months th.th-center{text-align:center}
+thead tr.row-weeks td{background:#1a3349;height:22px;border-bottom:1px solid rgba(255,255,255,0.08)}
+thead tr.row-weeks td.td-blank{border-right:1px solid rgba(255,255,255,0.1)}
+
+tr.phase-row td{padding:8px 14px;font-size:9.5px;font-weight:700;letter-spacing:2.5px;text-transform:uppercase;border-top:2px solid}
+.ph-proj td{background:#EAF3FA;color:#0E3550;border-color:var(--bar-proj)}
+.ph-obra td{background:var(--green-bg);color:#0E3520;border-color:var(--bar-obra)}
+
+tr.task-row{cursor:default;transition:background .15s ease,transform .15s ease;animation:fadeIn .35s ease both}
+/* Cliente: linhas e pills não respondem a clique */
+tr.task-row .status-pill{pointer-events:none}
+body.is-admin tr.task-row{cursor:pointer}
+body.is-admin tr.task-row .status-pill{pointer-events:auto}
+body.is-admin tr.task-row:hover td{background:#F0F7FF!important}
+tr.task-row td{border-bottom:1px solid #E8EEF5;vertical-align:middle;transition:opacity .3s ease}
+tr.task-row.done td{opacity:.65}
+tr.task-row.done td.td-name .tname{text-decoration:line-through;color:var(--muted)}
+tr.task-row.just-done td{background:#DFF5E8!important;transition:background .6s ease}
+tr.task-row.remote-update td{background:#E7F3FF!important;transition:background .7s ease}
+
+/* Status pills no modo cliente: não clicáveis */
+.status-pill{cursor:default}
+body.is-admin .status-pill{cursor:pointer}
+body.is-admin .status-pill:hover{filter:brightness(.93);transform:scale(1.04)}
+body.is-admin .status-pill:active{transform:scale(.96)}
+
+td.td-name{padding:8px 14px;border-right:1px solid var(--border)}
+.tname{font-size:11.5px;font-weight:500;color:var(--text);line-height:1.3;transition:color .3s}
+.tdept{font-size:9.5px;color:var(--muted);margin-top:3px;display:flex;align-items:center;gap:5px}
+.dept-dot{width:7px;height:7px;border-radius:50%;display:inline-block;flex-shrink:0}
+
+td.td-days{padding:5px 4px;text-align:center;border-right:1px solid var(--border)}
+.dval{font-size:12px;font-weight:700;color:var(--navy)}
+.dunit{font-size:9px;color:var(--muted)}
+td.td-dates{padding:5px 8px;border-right:1px solid var(--border)}
+.dstart{font-size:9.5px;color:var(--muted)}
+.dend{font-size:10.5px;font-weight:600;color:var(--navy)}
+
+td.td-status{padding:5px 10px;border-right:1px solid var(--border);text-align:center}
+.status-pill{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;border-radius:30px;font-size:10px;font-weight:600;transition:all .2s ease;white-space:nowrap;user-select:none}
+.s-pending{background:#F1F4F8;color:#5A6E7F}
+.s-progress{background:#FEF3E2;color:#8B4000}
+.s-done{background:#E8F5EE;color:#0A5E35}
+
+td.td-timeline{position:relative;height:54px;padding:0}
+
+/* ─── PRAZO RESTANTE (somente admin) ─── */
+td.td-remaining{padding:5px 8px;border-right:1px solid var(--border);text-align:center}
+.remain-val{font-size:13px;font-weight:700;line-height:1.1}
+.remain-unit{font-size:9px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;margin-top:2px}
+.remain-late{color:var(--red)}
+.remain-soon{color:var(--orange)}
+.remain-ok{color:var(--green-deep)}
+.remain-done{color:var(--muted)}
+.remain-future{color:var(--navy)}
+
+.bar{position:absolute;top:50%;transform:translateY(-50%);border-radius:4px;display:flex;align-items:center;padding:0 7px;overflow:hidden;height:22px;transition:filter .2s ease,box-shadow .2s ease;z-index:2;animation:growBar .6s cubic-bezier(.2,.7,.3,1) both}
+.bar:hover{filter:brightness(1.1);box-shadow:0 3px 10px rgba(0,0,0,0.15);z-index:4}
+.bar span{font-size:9px;font-weight:600;color:#fff;white-space:nowrap;pointer-events:none}
+.bar-crit{height:26px;background:transparent!important;border:2px solid var(--bar-crit);z-index:3}
+.bar-crit span{color:var(--bar-crit)}
+.bar-done{opacity:.5}
+
+/* ─── DRAG & RESIZE (apenas admin) ─── */
+body.is-admin .bar{cursor:grab}
+body.is-admin .bar.dragging{cursor:grabbing;animation:none;transition:none;z-index:10;box-shadow:0 8px 24px rgba(0,0,0,.25);filter:brightness(1.05)}
+body.is-admin .bar-crit.dragging{box-shadow:0 8px 24px rgba(192,90,0,.35)}
+
+.resize-handle{
+  position:absolute;top:0;bottom:0;width:8px;
+  display:none;cursor:ew-resize;z-index:5;
+  background:transparent;
+}
+body.is-admin .bar .resize-handle{display:block}
+body.is-admin .bar .resize-handle.left{left:-2px;border-radius:4px 0 0 4px}
+body.is-admin .bar .resize-handle.right{right:-2px;border-radius:0 4px 4px 0}
+body.is-admin .bar:hover .resize-handle{background:rgba(255,255,255,.25)}
+body.is-admin .bar-crit:hover .resize-handle{background:rgba(192,90,0,.18)}
+
+/* Tooltip durante drag */
+.drag-tooltip{
+  position:fixed;z-index:99999;background:var(--navy-dark);color:#fff;
+  padding:8px 12px;border-radius:6px;font-size:11.5px;font-weight:500;
+  box-shadow:0 6px 20px rgba(0,0,0,.3);pointer-events:none;
+  white-space:nowrap;line-height:1.4;display:none;
+}
+.drag-tooltip strong{color:#69F0AE;font-weight:700}
+.drag-tooltip.show{display:block;animation:fadeIn .15s ease}
+.drag-tooltip .label{font-size:9px;color:rgba(255,255,255,.55);text-transform:uppercase;letter-spacing:1px;margin-bottom:2px}
+
+/* Indicador de modo edição */
+.edit-hint{
+  display:none;align-items:center;gap:6px;
+  font-size:11px;color:var(--orange);background:var(--orange-bg);
+  border:1px solid #E8C468;border-radius:6px;padding:5px 10px;
+  font-weight:500;
+}
+body.is-admin .edit-hint{display:inline-flex}
+.edit-hint svg{flex-shrink:0}
+
+/* ─── BARRA DE ALTERAÇÕES PENDENTES (admin) ─── */
+.pending-bar{
+  position:sticky;top:0;z-index:50;
+  background:linear-gradient(135deg,#FEF3E2,#FFF8EE);
+  border:1px solid #E8C468;border-radius:10px;
+  padding:10px 14px;margin:0 0 12px 0;
+  display:none;align-items:center;gap:12px;flex-wrap:wrap;
+  box-shadow:0 6px 18px rgba(192,90,0,.15);
+  animation:slideDown .25s cubic-bezier(.2,.7,.3,1) both;
+}
+.pending-bar.show{display:flex}
+.pending-bar.saving{background:linear-gradient(135deg,#E0F0FF,#F0F8FF);border-color:#7AAEDD}
+@keyframes slideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.pending-icon{
+  width:32px;height:32px;border-radius:50%;
+  background:var(--orange);color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;font-size:14px;
+}
+.pending-bar.saving .pending-icon{background:var(--teal)}
+.pending-text{flex:1;min-width:200px}
+.pending-title{font-size:13px;font-weight:600;color:#8B4000;line-height:1.2}
+.pending-bar.saving .pending-title{color:#0E4A2E}
+.pending-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.pending-actions{display:flex;gap:8px;flex-wrap:wrap}
+.pending-btn{
+  font-family:inherit;font-size:12px;font-weight:600;
+  padding:8px 14px;border-radius:6px;cursor:pointer;
+  display:inline-flex;align-items:center;gap:6px;
+  transition:all .15s;letter-spacing:.3px;border:none;
+}
+.pending-btn-save{
+  background:var(--green);color:#fff;
+  box-shadow:0 4px 12px rgba(26,138,85,.3);
+}
+.pending-btn-save:hover{background:#127045;transform:translateY(-1px);box-shadow:0 6px 16px rgba(26,138,85,.45)}
+.pending-btn-save:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.pending-btn-undo{
+  background:#fff;color:var(--text);border:1px solid var(--border);
+}
+.pending-btn-undo:hover{border-color:var(--text)}
+.pending-btn-discard{
+  background:transparent;color:var(--red);border:1px solid var(--red-bg);
+}
+.pending-btn-discard:hover{background:var(--red-bg);border-color:var(--red)}
+
+/* Atividade com alteração pendente — destaque sutil na linha */
+tr.task-row.has-pending{
+  background:linear-gradient(90deg,rgba(254,243,226,.5),transparent 30%) !important;
+  border-left:3px solid var(--orange);
+}
+tr.task-row.has-pending td:first-child{padding-left:9px}
+
+.wline{position:absolute;top:0;bottom:0;width:1px;background:#E2ECF5;z-index:0}
+.today-vline{position:absolute;top:-20px;bottom:0;width:2px;background:#E53E3E;z-index:5}
+.today-pin-tl{position:absolute;font-size:8px;font-weight:700;color:#fff;background:#E53E3E;padding:1px 5px;border-radius:2px;white-space:nowrap;transform:translateX(-50%);z-index:6;top:-20px}
+
+.legend{padding:14px 28px 18px;border-top:1px solid var(--border);background:#F9FAFB;display:flex;flex-wrap:wrap;gap:8px 22px;align-items:center}
+.leg-title{font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--navy);width:100%;margin-bottom:4px}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text)}
+.leg-swatch{width:26px;height:10px;border-radius:2px}
+.leg-crit{width:26px;height:12px;border:2px solid var(--bar-crit);border-radius:2px}
+.leg-today{width:3px;height:16px;background:#E53E3E;border-radius:1px}
+
+.hint{text-align:center;font-size:10.5px;color:var(--muted);padding:7px;border-bottom:1px solid var(--border);background:var(--row-alt)}
+
+.footer{background:var(--navy-dark);padding:12px 28px;display:flex;justify-content:space-between;align-items:center;border-radius:0 0 8px 8px;flex-wrap:wrap;gap:8px}
+.footer-l{font-size:10px;color:rgba(255,255,255,0.45)}
+.footer-r{font-size:10px;color:rgba(255,255,255,0.55);font-weight:500}
+
+.empty-schedule{padding:60px 28px;text-align:center;color:var(--muted)}
+.empty-schedule .big-icon{font-size:52px;margin-bottom:16px;opacity:.4}
+.empty-schedule h3{font-size:16px;color:var(--text);margin-bottom:8px}
+.empty-schedule p{font-size:12.5px;line-height:1.6;max-width:420px;margin:0 auto}
+
+/* ════════════════ MAIN TABS (Cronograma / Financeiro) ════════════════ */
+.main-tabs{
+  display:flex;background:#fff;border-bottom:1px solid var(--border);
+  padding:0 14px;gap:2px;
+}
+.main-tab{
+  background:transparent;border:none;font-family:inherit;
+  padding:14px 20px;font-size:13px;font-weight:600;
+  color:var(--muted);cursor:pointer;
+  border-bottom:3px solid transparent;
+  display:inline-flex;align-items:center;gap:8px;
+  transition:all .2s;letter-spacing:.3px;
+}
+.main-tab:hover{color:var(--navy);background:var(--row-alt)}
+.main-tab.active{color:var(--navy);border-bottom-color:var(--teal);background:var(--row-alt)}
+.tab-pill{
+  display:inline-block;background:var(--teal);color:#fff;
+  font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;
+  letter-spacing:.5px;line-height:1.2;
+}
+
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeIn .3s ease}
+
+/* ════════════════ FINANCEIRO ════════════════ */
+.fin-subtabs{
+  display:flex;align-items:center;gap:6px;padding:14px 28px;
+  border-bottom:1px solid var(--border);background:#FAFCFE;flex-wrap:wrap;
+}
+.fin-subtab{
+  background:#fff;border:1px solid var(--border);font-family:inherit;
+  padding:7px 14px;font-size:12px;font-weight:500;
+  color:var(--muted);cursor:pointer;border-radius:6px;
+  display:inline-flex;align-items:center;gap:6px;transition:all .2s;
+}
+.fin-subtab:hover{border-color:var(--teal);color:var(--teal)}
+.fin-subtab.active{background:var(--navy);border-color:var(--navy);color:#fff}
+.fin-subtab.active:hover{background:var(--navy-light)}
+
+.fin-pane{display:none;padding:24px 28px}
+.fin-pane.active{display:block;animation:fadeIn .3s ease}
+
+/* Resumo financeiro topo */
+.fin-summary{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:14px;padding:18px 28px 0;
+}
+.fin-stat{
+  background:#fff;border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;
+}
+.fin-stat-lbl{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:6px}
+.fin-stat-val{font-size:20px;font-weight:700;color:var(--navy-dark);line-height:1.1;letter-spacing:-.3px}
+.fin-stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.fin-stat-val.pos{color:var(--green-deep)}
+.fin-stat-val.neg{color:var(--red)}
+
+/* ── Tabelas de Serviços e Medições ── */
+.services-help{
+  font-size:12px;color:var(--text);line-height:1.55;
+  background:var(--teal-light);padding:12px 16px;border-radius:8px;
+  border-left:3px solid var(--teal);margin-bottom:18px;
+}
+.services-help strong{color:var(--navy-dark)}
+.services-help em{font-style:normal;font-weight:600;color:var(--teal)}
+.services-table-wrap{
+  background:#fff;border:1px solid var(--border);border-radius:10px;
+  overflow:hidden;box-shadow:0 4px 14px rgba(10,30,60,.05);
+}
+.services-table{width:100%;border-collapse:collapse;font-size:12.5px}
+.services-table thead th{
+  background:#FAFCFE;font-size:10px;letter-spacing:1px;text-transform:uppercase;
+  font-weight:600;color:var(--muted);padding:11px 14px;text-align:left;
+  border-bottom:1px solid var(--border);
+}
+.services-table thead th.num{text-align:right}
+.services-table tbody td{
+  padding:10px 14px;border-bottom:1px solid var(--border);vertical-align:middle;
+}
+.services-table tbody tr:last-child td{border-bottom:1px solid var(--border)}
+.services-table tbody tr:hover{background:var(--row-alt)}
+.services-table .num{text-align:right;font-variant-numeric:tabular-nums}
+.services-table tfoot td{
+  background:var(--gray-bg);font-weight:600;
+  padding:12px 14px;border-top:2px solid var(--border);
+}
+.services-table tfoot td.num{font-variant-numeric:tabular-nums}
+.services-name{font-weight:500;color:var(--text)}
+.services-name-sub{font-size:10.5px;color:var(--muted);margin-top:2px;letter-spacing:.3px;text-transform:uppercase;font-weight:600}
+.services-input{
+  width:120px;text-align:right;padding:6px 10px;
+  font-family:'Poppins',sans-serif;font-size:12.5px;
+  border:1px solid var(--border);border-radius:6px;background:#FAFCFE;
+  font-variant-numeric:tabular-nums;
+  outline:none;transition:all .15s;color:var(--text);
+}
+.services-input:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 3px rgba(26,122,154,.12)}
+.services-input.saving{background:#FFF8E1}
+.services-input.saved{background:#E8F5EE}
+.services-input:disabled{background:#F4F7FA;cursor:default;color:var(--text)}
+.services-readonly{display:inline-block;font-variant-numeric:tabular-nums;color:var(--text)}
+.services-zero{color:var(--muted)}
+.diff-pos{color:var(--green-deep);font-weight:600}
+.diff-neg{color:var(--red);font-weight:600}
+.diff-zero{color:var(--muted)}
+
+.status-pill{
+  display:inline-block;padding:2px 9px;border-radius:11px;
+  font-size:10px;font-weight:600;letter-spacing:.5px;text-transform:uppercase;
+  font-variant-numeric:normal;
+}
+.status-pill.pendente{background:#F1F4F8;color:#5A6E7F}
+.status-pill.andamento{background:#FEF3E2;color:#8B4000}
+.status-pill.concluido{background:#E8F5EE;color:var(--green-deep)}
+
+/* ── Pote: barra de soma das metas ── */
+.potes-summary-bar{
+  margin-top:18px;padding:14px 18px;border-radius:10px;
+  background:#fff;border:1px solid var(--border);
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+}
+.potes-summary-bar.warn{border-color:var(--orange);background:var(--orange-bg)}
+.potes-summary-bar.over{border-color:var(--red);background:var(--red-bg)}
+.potes-summary-bar.ok{border-color:var(--green);background:var(--green-bg)}
+.potes-sum-label{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:600}
+.potes-sum-value{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--navy-dark)}
+.potes-summary-bar.warn .potes-sum-value{color:#8B4000}
+.potes-summary-bar.over .potes-sum-value{color:var(--red)}
+.potes-summary-bar.ok .potes-sum-value{color:var(--green-deep)}
+.potes-sum-msg{font-size:12px;color:var(--text);flex:1}
+.potes-sum-track{flex:1;min-width:220px;height:10px;background:#E8EEF5;border-radius:5px;overflow:hidden;position:relative}
+.potes-sum-track-fill{height:100%;border-radius:5px;background:var(--teal);transition:width .3s ease}
+.potes-summary-bar.over .potes-sum-track-fill{background:var(--red)}
+.potes-summary-bar.warn .potes-sum-track-fill{background:var(--orange)}
+.potes-summary-bar.ok .potes-sum-track-fill{background:var(--green)}
+
+/* Modal pote: resumo de soma das metas no topo */
+.pote-meta-summary{
+  margin-bottom:16px;padding:11px 14px;border-radius:8px;
+  background:var(--teal-light);font-size:12px;line-height:1.5;
+  border-left:3px solid var(--teal);color:var(--navy-dark);
+}
+.pote-meta-summary.warn{background:var(--orange-bg);border-left-color:var(--orange);color:#8B4000}
+.pote-meta-summary.ok{background:var(--green-bg);border-left-color:var(--green);color:var(--green-deep)}
+.pote-meta-summary strong{font-weight:700}
+
+/* Potes grid */
+.potes-grid{
+  display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;
+}
+.pote-card{
+  background:#fff;border:1px solid var(--border);border-radius:12px;
+  padding:18px 20px;cursor:default;transition:all .2s;
+  position:relative;overflow:hidden;
+}
+body.is-admin .pote-card{cursor:pointer}
+body.is-admin .pote-card:hover{transform:translateY(-2px);box-shadow:0 10px 24px rgba(10,30,60,.08);border-color:var(--teal)}
+.pote-card::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:4px;
+  background:var(--pote-color, var(--teal));
+}
+.pote-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pote-icon{
+  width:38px;height:38px;border-radius:8px;
+  background:var(--pote-color-light, var(--teal-light));
+  color:var(--pote-color, var(--teal));
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.pote-name{flex:1;font-size:14px;font-weight:600;color:var(--text);line-height:1.3}
+.pote-name-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.pote-actions{display:none;gap:4px}
+body.is-admin .pote-card:hover .pote-actions{display:flex}
+.pote-act{
+  width:26px;height:26px;border-radius:5px;border:1px solid var(--border);
+  background:#fff;color:var(--muted);cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.pote-act:hover{color:var(--navy);border-color:var(--navy)}
+
+.pote-vals{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px}
+.pote-val-grp{display:flex;flex-direction:column;gap:2px}
+.pote-val-lbl{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:600}
+.pote-val{font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.3px}
+.pote-val.gasto{color:var(--text)}
+.pote-val.disp{color:var(--green-deep)}
+.pote-val.disp.neg{color:var(--red)}
+
+.pote-bar-track{
+  height:8px;background:#E8EEF5;border-radius:4px;overflow:hidden;
+  position:relative;margin-bottom:8px;
+}
+.pote-bar-fill{
+  height:100%;background:var(--pote-color, var(--teal));
+  border-radius:4px;transition:width .8s cubic-bezier(.4,0,.2,1);
+  position:relative;
+}
+.pote-bar-fill.warn{background:var(--orange)}
+.pote-bar-fill.over{background:var(--red)}
+.pote-bar-fill::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);
+  background-size:80px 100%;animation:shimmer 2.5s infinite;
+}
+.pote-foot{display:flex;justify-content:space-between;font-size:11px;color:var(--muted)}
+.pote-foot .pct{font-weight:700}
+.pote-foot .pct.warn{color:var(--orange)}
+.pote-foot .pct.over{color:var(--red)}
+.pote-desc{font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.4;font-style:italic}
+
+/* Lançamentos */
+.lanc-filters{
+  display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;
+}
+.form-input-small{
+  font-family:inherit;padding:8px 12px;font-size:12.5px;
+  border:1px solid var(--border);border-radius:6px;background:#fff;
+  outline:none;transition:all .15s;color:var(--text);
+}
+.form-input-small:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(26,122,154,.1)}
+.lanc-list{
+  background:#fff;border:1px solid var(--border);border-radius:10px;overflow:hidden;
+}
+.lanc-row{
+  display:grid;
+  grid-template-columns:auto 1fr auto auto auto;
+  gap:14px;padding:12px 16px;align-items:center;
+  border-bottom:1px solid var(--border);transition:background .15s;
+}
+body.is-admin .lanc-row{cursor:pointer}
+body.is-admin .lanc-row:hover{background:var(--row-alt)}
+.lanc-row:last-child{border-bottom:none}
+.lanc-pote-tag{
+  display:inline-flex;align-items:center;gap:5px;
+  font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;
+  white-space:nowrap;
+}
+.lanc-desc{font-size:13px;font-weight:500;color:var(--text)}
+.lanc-meta{font-size:11px;color:var(--muted);margin-top:2px;display:flex;gap:10px;flex-wrap:wrap}
+.lanc-cat-tag{display:inline-block;background:var(--gray-bg);color:var(--muted);font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:.3px;text-transform:uppercase}
+.lanc-data{font-size:11.5px;color:var(--muted);font-weight:500;white-space:nowrap}
+.lanc-valor{font-size:14px;font-weight:700;color:var(--text);text-align:right;white-space:nowrap;letter-spacing:-.3px}
+.lanc-valor.previsto{color:var(--orange);font-style:italic}
+.lanc-tipo-pill{
+  font-size:9px;font-weight:600;padding:2px 7px;border-radius:10px;
+  letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;
+}
+.lanc-tipo-pill.gasto{background:var(--red-bg);color:var(--red)}
+.lanc-tipo-pill.previsto{background:var(--orange-bg);color:var(--orange)}
+
+/* Empty state */
+.empty-state{padding:50px 24px;text-align:center;color:var(--muted)}
+.empty-state .empty-icon{font-size:42px;margin-bottom:12px;opacity:.5}
+.empty-state .empty-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px}
+.empty-state .empty-sub{font-size:12.5px;line-height:1.5;display:none}
+body.is-admin .empty-state .empty-sub.admin-only{display:block}
+
+/* Relatórios */
+.rep-section{
+  background:#fff;border:1px solid var(--border);border-radius:10px;
+  padding:18px 22px;margin-bottom:16px;
+}
+.rep-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:14px;letter-spacing:.3px}
+.rep-bar-row{display:flex;align-items:center;gap:14px;margin-bottom:10px;font-size:12.5px}
+.rep-bar-name{flex:0 0 160px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rep-bar-track{flex:1;height:20px;background:#E8EEF5;border-radius:4px;overflow:hidden;position:relative}
+.rep-bar-fill{height:100%;border-radius:4px;display:flex;align-items:center;padding:0 8px;color:#fff;font-size:10.5px;font-weight:700;transition:width .4s ease}
+.rep-bar-fill.warn{background:var(--orange) !important}
+.rep-bar-fill.over{background:var(--red) !important}
+.rep-bar-val{flex:0 0 170px;text-align:right;font-weight:600;color:var(--text);font-size:12px}
+.rep-bar-pct{flex:0 0 56px;text-align:right;font-size:11px;color:var(--muted);font-weight:700}
+.rep-bar-pct.warn{color:var(--orange)}
+.rep-bar-pct.over{color:var(--red)}
+.rep-bar-meta-line{
+  position:absolute;top:-3px;bottom:-3px;width:2px;
+  background:var(--text);border-radius:1px;pointer-events:none;
+  box-shadow:0 0 0 1px rgba(255,255,255,.6);
+}
+
+/* KPIs */
+.rep-kpis{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:16px;
+}
+.rep-kpi{
+  background:#fff;border:1px solid var(--border);border-radius:10px;
+  padding:16px 18px;
+}
+.rep-kpi-lbl{font-size:10.5px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-bottom:8px}
+.rep-kpi-val{font-size:22px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums;line-height:1}
+.rep-kpi-val.pos{color:var(--green-deep)}
+.rep-kpi-val.neg{color:var(--red)}
+.rep-kpi-sub{font-size:11px;color:var(--muted);margin-top:6px}
+
+/* Pie/Donut chart */
+.rep-pie-wrap{display:grid;grid-template-columns:200px 1fr;gap:28px;align-items:center}
+.rep-pie{
+  width:200px;height:200px;border-radius:50%;
+  position:relative;
+  box-shadow:0 4px 12px rgba(10,30,60,.10);
+}
+.rep-pie-hole{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:115px;height:115px;background:#fff;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:inset 0 1px 3px rgba(10,30,60,.08);
+}
+.rep-pie-val{font-size:14px;font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
+.rep-pie-lbl{font-size:9.5px;color:var(--muted);letter-spacing:1px;text-transform:uppercase;margin-top:4px}
+.rep-pie-legend{display:flex;flex-direction:column;gap:8px}
+.rep-pie-leg-item{display:grid;grid-template-columns:14px 1fr 50px 110px;gap:10px;align-items:center;font-size:12.5px;color:var(--text)}
+.rep-pie-leg-dot{width:12px;height:12px;border-radius:3px}
+.rep-pie-leg-name{font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rep-pie-leg-pct{text-align:right;color:var(--muted);font-weight:600}
+.rep-pie-leg-val{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* Stacked bar (avanço físico) */
+.rep-stack-bar{
+  height:32px;background:#E8EEF5;border-radius:6px;overflow:hidden;
+  display:flex;
+}
+.rep-stack-seg{
+  display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:11px;font-weight:700;
+  transition:width .4s ease;
+}
+.rep-stack-seg.done{background:var(--green)}
+.rep-stack-seg.prog{background:var(--teal)}
+.rep-stack-seg.pend{background:#94A3B8}
+.rep-stack-legend{display:flex;gap:18px;margin-top:10px;font-size:11.5px;color:var(--text);flex-wrap:wrap}
+.rep-stack-legend span{display:flex;align-items:center;gap:6px;font-weight:500}
+.rep-stack-dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+.rep-stack-dot.done{background:var(--green)}
+.rep-stack-dot.prog{background:var(--teal)}
+.rep-stack-dot.pend{background:#94A3B8}
+
+/* Bars verticais por mês */
+.rep-monthbars{
+  display:flex;align-items:flex-end;gap:14px;height:200px;
+  padding:10px 0 0 0;border-bottom:1px solid var(--border);
+}
+.rep-monthbar{
+  flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;
+  height:100%;justify-content:flex-end;min-width:0;
+}
+.rep-monthbar-stack{
+  width:32px;height:140px;display:flex;flex-direction:column-reverse;
+  border-radius:4px 4px 0 0;overflow:hidden;background:#F1F5F9;
+  position:relative;
+}
+.rep-monthbar-real{background:var(--teal);width:100%;transition:height .4s ease}
+.rep-monthbar-prev{background:var(--orange);width:100%;transition:height .4s ease}
+.rep-monthbar-lbl{font-size:10.5px;color:var(--muted);font-weight:600;letter-spacing:.3px}
+.rep-monthbar-val{font-size:9.5px;color:var(--text);font-weight:700;font-variant-numeric:tabular-nums}
+
+@media (max-width:780px){
+  .rep-kpis{grid-template-columns:repeat(2,1fr)}
+  .rep-pie-wrap{grid-template-columns:1fr}
+  .rep-pie{margin:0 auto}
+  .rep-bar-name{flex:0 0 110px;font-size:11px}
+  .rep-bar-val{flex:0 0 100px;font-size:10.5px}
+}
+
+/* ════════════════ MODAL ════════════════ */
+.modal-backdrop{position:fixed;inset:0;background:rgba(10,20,35,.55);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}
+.modal-backdrop.show{display:flex;animation:fadeIn .2s ease both}
+.modal{background:#fff;border-radius:12px;box-shadow:0 30px 90px rgba(0,0,0,.4);max-width:560px;width:100%;max-height:90vh;overflow:auto;animation:slideUp .3s cubic-bezier(.2,.7,.3,1) both}
+.modal-hdr{padding:20px 24px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.modal-title{font-size:16px;font-weight:600}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:22px;cursor:pointer;width:28px;height:28px;border-radius:6px;transition:all .15s;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--gray-bg);color:var(--text)}
+.modal-body{padding:22px 24px}
+.modal-ftr{padding:16px 24px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:10px;flex-wrap:wrap}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid .form-grid-full{grid-column:1/-1}
+.form-lbl{display:block;font-size:10px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:var(--muted);margin-bottom:7px}
+.form-input{width:100%;padding:11px 14px;font-size:13.5px;font-family:inherit;color:var(--text);border:2px solid var(--border);border-radius:8px;background:#FAFCFE;outline:none;transition:all .2s}
+.form-input:focus{border-color:var(--teal);background:#fff;box-shadow:0 0 0 4px rgba(26,122,154,.12)}
+textarea.form-input{resize:vertical;font-family:inherit;min-height:60px}
+
+.btn-primary{background:linear-gradient(135deg,var(--teal),var(--navy-light));color:#fff;border:none;padding:10px 18px;border-radius:7px;font-size:12px;font-weight:600;letter-spacing:.5px;cursor:pointer;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(26,122,154,.3)}
+.btn-secondary{background:#fff;color:var(--navy);border:1px solid var(--border);padding:10px 18px;border-radius:7px;font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .2s;display:inline-flex;align-items:center;gap:7px}
+.btn-secondary:hover{border-color:var(--navy);transform:translateY(-1px)}
+.btn-secondary.danger{color:var(--red);border-color:var(--red-bg)}
+.btn-secondary.danger:hover{border-color:var(--red);background:var(--red-bg)}
+
+.color-picker{display:flex;gap:6px;flex-wrap:wrap;padding:6px 0}
+.color-swatch{
+  width:28px;height:28px;border-radius:6px;cursor:pointer;
+  transition:all .15s;border:2px solid transparent;
+}
+.color-swatch:hover{transform:scale(1.12)}
+.color-swatch.active{border-color:#1A2D3D;box-shadow:0 0 0 2px #fff,0 0 0 4px var(--text)}
+
+@media print{
+  body{background:#fff;padding:0;animation:none}
+  .shell{max-width:100%;padding:0}
+  .filter-bar,.hint,.toast-stack,.hdr-exit{display:none!important}
+  .bar,tr.task-row,.card,.hdr{animation:none!important}
+  @page{size:A3 landscape;margin:6mm}
+}
+
+@media (max-width:900px){
+  .hdr-top{flex-direction:column}
+  .hdr-brand,.hdr-client{border-right:none;border-left:none;border-bottom:1px solid rgba(255,255,255,0.1)}
+  .kpi-row{flex-wrap:wrap}
+  .kpi{flex:1 1 33%;border-bottom:1px solid rgba(255,255,255,0.1)}
+  .shell{padding:12px}
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading-screen" class="loading-screen">
+  <div class="loader"></div>
+  <div class="loading-text">Carregando cronograma…</div>
+</div>
+
+<!-- Error (escondido inicialmente) -->
+<div id="error-screen" class="error-screen" style="display:none">
+  <div class="icon">🔒</div>
+  <h2 id="error-title">Obra não encontrada</h2>
+  <p id="error-msg">O código ou link informado não corresponde a nenhuma obra ativa.</p>
+  <a href="index.html">Voltar ao início</a>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<!-- Tooltip exibido durante o arrasto/redimensionamento das barras (admin) -->
+<div id="drag-tooltip" class="drag-tooltip">
+  <div class="label" id="drag-tip-label">Movendo</div>
+  <div id="drag-tip-content">—</div>
+</div>
+
+<div id="main" class="shell" style="display:none">
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="hdr-brand" id="hdr-brand">
+      <!-- Logo e nome são preenchidos dinamicamente via applyBranding() -->
+      <div class="brand-logo-fallback" id="brand-logo-fb">P</div>
+      <div class="brand-text">
+        <span class="brand-name" id="brand-name">—</span>
+        <span class="brand-tag" id="brand-tag">Plan&amp;jar</span>
+      </div>
+    </div>
+
+    <div class="hdr-center">
+      <div class="hdr-eyebrow">Acompanhamento de Obra — Cronograma Interativo</div>
+      <div class="hdr-title" id="hdr-title">Carregando…</div>
+      <div class="hdr-sub" id="hdr-sub">—</div>
+    </div>
+
+    <div class="hdr-client">
+      <div class="logo-ff" id="client-logo">C</div>
+      <div class="client-text">
+        <div class="client-name" id="client-name">—</div>
+        <div class="client-sub" id="client-sub">Cliente</div>
+      </div>
+      <a href="index.html" class="hdr-exit" title="Sair">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sair
+      </a>
+    </div>
+  </div>
+
+  <div class="prog-strip">
+    <span class="prog-label">Progresso geral</span>
+    <div class="prog-bar-track"><div class="prog-bar-fill" id="prog-fill" style="width:0%"></div></div>
+    <span class="prog-pct" id="prog-pct">0%</span>
+    <div class="today-badge" id="today-badge">—</div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-val" id="kpi-total">0</div><div class="kpi-lbl">Atividades</div></div>
+    <div class="kpi kpi-done"><div class="kpi-val" id="kpi-done">0</div><div class="kpi-lbl">Concluídas</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-prog">0</div><div class="kpi-lbl">Em andamento</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-pend">0</div><div class="kpi-lbl">Pendentes</div></div>
+    <div class="kpi kpi-warn"><div class="kpi-val" id="kpi-end">—</div><div class="kpi-lbl">Previsão de conclusão</div></div>
+    <div class="kpi kpi-warn"><div class="kpi-val" id="kpi-crit">—</div><div class="kpi-lbl">Caminho crítico</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <!-- Abas principais -->
+  <div class="main-tabs">
+    <button class="main-tab active" data-tab="cronograma" onclick="switchMainTab('cronograma')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Cronograma
+    </button>
+    <button class="main-tab" data-tab="financeiro" onclick="switchMainTab('financeiro')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Financeiro
+      <span class="tab-pill" id="fin-tab-pill" style="display:none">0</span>
+    </button>
+  </div>
+
+  <!-- ════════ CRONOGRAMA ════════ -->
+  <div class="tab-content active" id="tab-cronograma">
+    <!-- Barra de alterações pendentes (somente admin, aparece quando há mudanças não salvas) -->
+    <div class="pending-bar" id="pending-bar">
+      <div class="pending-icon" id="pending-icon">!</div>
+      <div class="pending-text">
+        <div class="pending-title" id="pending-title">Alterações não salvas</div>
+        <div class="pending-sub" id="pending-sub">—</div>
+      </div>
+      <div class="pending-actions">
+        <button class="pending-btn pending-btn-undo" onclick="undoLastChange()" id="btn-undo" title="Desfazer última alteração (Ctrl+Z)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>
+          Desfazer
+        </button>
+        <button class="pending-btn pending-btn-discard" onclick="discardAllChanges()" title="Descartar todas as alterações pendentes">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Descartar
+        </button>
+        <button class="pending-btn pending-btn-save" onclick="saveAllPendingChanges()" id="btn-save-pending">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span id="btn-save-pending-label">Salvar alterações</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="hint" id="hint-line">Cronograma atualizado em tempo real <span id="hint-by"></span>&nbsp;·&nbsp; <span id="hint-sync">Sincronização ativa</span></div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" data-f="all" onclick="setFilter('all',this)">Todas</button>
+      <button class="filter-btn" data-f="pending" onclick="setFilter('pending',this)">Pendentes</button>
+      <button class="filter-btn" data-f="progress" onclick="setFilter('progress',this)">Em andamento</button>
+      <button class="filter-btn" data-f="done" onclick="setFilter('done',this)">Concluídas</button>
+      <button class="filter-btn" data-f="PROJETOS" onclick="setFilter('PROJETOS',this)">📐 Projetos</button>
+      <button class="filter-btn" data-f="OBRA" onclick="setFilter('OBRA',this)">🏗 Obra</button>
+
+      <div class="filter-spacer"></div>
+
+      <span id="admin-badge-wrap" style="display:none"><span class="admin-badge">Modo admin</span></span>
+
+      <span class="edit-hint" title="Arraste a barra para reposicionar; arraste as bordas para redimensionar">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/><polyline points="9 6 3 12 9 18" transform="translate(15 0) scale(-1 1)"/></svg>
+        Arraste as barras para editar o cronograma
+      </span>
+
+      <button class="notif-toggle admin-only" id="recalc-crit-btn" onclick="recalcCaminhoCritico()" title="Recalcular o caminho crítico com base nas datas atuais">
+        ⚡ <span>Recalcular caminho crítico</span>
+      </button>
+
+      <button class="notif-toggle admin-only" id="notif-btn" onclick="toggleNotifications()" title="Notificações do navegador ao concluir atividades">
+        <span id="notif-icon">🔔</span><span id="notif-label">Notificações</span>
+      </button>
+
+      <div class="save-group">
+        <div class="save-indicator admin-only" id="save-ind"><span class="dot"></span><span id="save-lbl">Conectando...</span></div>
+        <button class="icon-btn" onclick="window.print()" title="Imprimir / PDF">🖨</button>
+      </div>
+    </div>
+
+    <div class="gantt-wrap">
+      <div id="gantt-root"></div>
+    </div>
+
+    <div class="legend">
+      <div class="leg-title">Legenda</div>
+      <div class="leg-item"><div class="leg-today"></div><span>Hoje</span></div>
+      <div class="leg-item"><div class="leg-swatch" style="background:var(--bar-proj)"></div><span>Projetos/Aprovações</span></div>
+      <div class="leg-item"><div class="leg-swatch" style="background:var(--bar-obra)"></div><span>Execução de Obra</span></div>
+      <div class="leg-item"><div class="leg-crit"></div><span>Caminho Crítico</span></div>
+      <div class="leg-item"><div class="status-pill s-pending" style="pointer-events:none">Pendente</div></div>
+      <div class="leg-item"><div class="status-pill s-progress" style="pointer-events:none">Em Andamento</div></div>
+      <div class="leg-item"><div class="status-pill s-done" style="pointer-events:none">Concluído</div></div>
+    </div>
+  </div>
+
+  <!-- ════════ FINANCEIRO ════════ -->
+  <div class="tab-content" id="tab-financeiro">
+    <!-- Sub-abas -->
+    <div class="fin-subtabs">
+      <button class="fin-subtab active" data-sub="servicos" onclick="switchFinSub('servicos')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3zM3 11h18v4H3zM3 19h18v2H3z"/></svg>
+        Serviços
+      </button>
+      <button class="fin-subtab" data-sub="potes" onclick="switchFinSub('potes')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 12h-11z"/><path d="M9 8V5a3 3 0 0 1 6 0v3"/></svg>
+        Potes (metas %)
+      </button>
+      <button class="fin-subtab admin-only" data-sub="lancamentos" onclick="switchFinSub('lancamentos')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        Lançamentos
+      </button>
+      <button class="fin-subtab" data-sub="medicoes" onclick="switchFinSub('medicoes')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+        Físico × Financeiro
+      </button>
+      <button class="fin-subtab admin-only" data-sub="relatorios" onclick="switchFinSub('relatorios')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21H3"/><path d="M7 17V9"/><path d="M12 17V5"/><path d="M17 17v-6"/></svg>
+        Relatórios
+      </button>
+      <div class="filter-spacer"></div>
+      <button class="btn-primary admin-only" onclick="openPoteModal()" id="btn-new-pote" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo pote
+      </button>
+      <button class="btn-primary admin-only" onclick="openLancamentoModal()" id="btn-new-lanc" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo lançamento
+      </button>
+    </div>
+
+    <!-- Resumo financeiro -->
+    <div class="fin-summary" id="fin-summary"></div>
+
+    <!-- Conteúdo das sub-abas -->
+
+    <!-- SERVIÇOS (cobrado × realizado por item do cronograma) -->
+    <div class="fin-pane active" id="fin-pane-servicos">
+      <div class="services-help">
+        <strong>Como funciona:</strong> cada atividade do cronograma vira uma linha aqui. Preencha o <em>cobrado</em> (o que vai cobrar do cliente por aquele serviço) e o <em>realizado</em> (o que já foi efetivamente faturado). A soma do cobrado é o orçamento total da obra — base do cálculo dos potes em %.
+      </div>
+      <div class="services-table-wrap">
+        <table class="services-table" id="services-table">
+          <thead>
+            <tr>
+              <th style="width:48px">#</th>
+              <th>Serviço</th>
+              <th class="num">Cobrado (R$)</th>
+              <th class="num">Realizado (R$)</th>
+              <th class="num">Diferença</th>
+            </tr>
+          </thead>
+          <tbody id="services-body"></tbody>
+          <tfoot id="services-foot"></tfoot>
+        </table>
+      </div>
+      <div id="services-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">Sem serviços no cronograma</div>
+        <div class="empty-sub">Importe a planilha de atividades pelo painel admin pra os serviços aparecerem aqui.</div>
+      </div>
+    </div>
+
+    <!-- POTES (metas %) -->
+    <div class="fin-pane" id="fin-pane-potes">
+      <div id="potes-grid" class="potes-grid"></div>
+      <div id="potes-summary-bar" class="potes-summary-bar" style="display:none"></div>
+      <div id="potes-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">🏺</div>
+        <div class="empty-title">Nenhum pote criado ainda</div>
+        <div class="empty-sub admin-only">Crie os potes padrão (Material, Mão de obra, Taxas e Impostos, Lucro) ou clique em <strong>Novo pote</strong> pra começar do zero.</div>
+        <div class="empty-sub" style="display:block" id="empty-pote-client">A construtora ainda não configurou as metas de % desta obra.</div>
+        <button class="btn-primary admin-only" id="btn-criar-potes-padrao" onclick="criarPotesPadrao()" style="margin-top:18px;gap:8px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Criar 4 potes padrão
+        </button>
+      </div>
+    </div>
+
+    <div class="fin-pane" id="fin-pane-lancamentos">
+      <div class="lanc-filters">
+        <select id="lanc-filter-pote" class="form-input-small" onchange="renderLancamentos()">
+          <option value="">Todos os potes</option>
+        </select>
+        <select id="lanc-filter-cat" class="form-input-small" onchange="renderLancamentos()">
+          <option value="">Todas as categorias</option>
+        </select>
+        <input type="search" id="lanc-search" class="form-input-small" placeholder="Buscar descrição…" oninput="renderLancamentos()">
+      </div>
+      <div id="lanc-list" class="lanc-list"></div>
+      <div id="lanc-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">📒</div>
+        <div class="empty-title">Nenhum lançamento ainda</div>
+        <div class="empty-sub">Os lançamentos vão aparecer aqui conforme forem registrados.</div>
+      </div>
+    </div>
+
+    <!-- MEDIÇÕES (físico × financeiro) -->
+    <div class="fin-pane" id="fin-pane-medicoes">
+      <div class="services-help">
+        <strong>Medições automáticas:</strong> esta tabela mostra, por serviço, o cruzamento entre <em>avanço físico</em> (do cronograma) e <em>financeiro</em> (cobrado/realizado). A coluna "<em>medido</em>" é calculada como % físico × valor cobrado e indica quanto deveria já ter sido faturado pelo avanço da obra.
+      </div>
+      <div class="services-table-wrap">
+        <table class="services-table" id="medicoes-table">
+          <thead>
+            <tr>
+              <th>Serviço</th>
+              <th class="num">Status</th>
+              <th class="num">% físico</th>
+              <th class="num">Cobrado</th>
+              <th class="num">Medido (estimado)</th>
+              <th class="num">Realizado</th>
+              <th class="num">Saldo a faturar</th>
+            </tr>
+          </thead>
+          <tbody id="medicoes-body"></tbody>
+          <tfoot id="medicoes-foot"></tfoot>
+        </table>
+      </div>
+      <div id="medicoes-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">📐</div>
+        <div class="empty-title">Sem dados de medição</div>
+        <div class="empty-sub">Preencha o cobrado dos serviços e atualize o status no cronograma para ver as medições aqui.</div>
+      </div>
+    </div>
+
+    <!-- RELATÓRIOS — só admin -->
+    <div class="fin-pane" id="fin-pane-relatorios">
+      <div id="relatorios-content"></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-l" id="footer-company">Plan&amp;jar · Construa com clareza</div>
+  <div class="footer-r" id="footer-rev">Cronograma de Obra</div>
+</div>
+</div>
+
+<!-- ════════ MODAL POTE ════════ -->
+<div id="pote-modal" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="pote-modal-title">Novo pote</div>
+      <button class="modal-close" onclick="closePoteModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="pote-meta-summary" class="pote-meta-summary"></div>
+      <div class="form-grid">
+        <div class="form-grid-full">
+          <label class="form-lbl">Nome do pote *</label>
+          <input id="pf-nome" class="form-input" placeholder="Ex: Materiais, Mão de obra, Lucro">
+        </div>
+        <div>
+          <label class="form-lbl">Meta (% do orçamento) *</label>
+          <input id="pf-percent" class="form-input" type="number" min="0" max="100" step="0.5" placeholder="Ex: 40">
+          <div class="field-help" id="pf-percent-help">A soma das metas dos potes precisa fechar em 100%.</div>
+        </div>
+        <div>
+          <label class="form-lbl">Cor do pote</label>
+          <div class="color-picker">
+            <span class="color-swatch" data-color="#1A7A9A" style="background:#1A7A9A" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#1A8A55" style="background:#1A8A55" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#C05A00" style="background:#C05A00" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#5E3FA0" style="background:#5E3FA0" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#B07010" style="background:#B07010" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#7A2A6B" style="background:#7A2A6B" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#0E4A2E" style="background:#0E4A2E" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#2A4E7A" style="background:#2A4E7A" onclick="selectPoteColor(this)"></span>
+            <input id="pf-cor" type="hidden" value="#1A7A9A">
+          </div>
+        </div>
+        <div>
+          <label class="form-lbl">Ícone</label>
+          <select id="pf-icon" class="form-input">
+            <option value="🧱">🧱 Materiais</option>
+            <option value="👷">👷 Mão de obra</option>
+            <option value="💰">💰 Lucro</option>
+            <option value="📋">📋 Impostos / tributos</option>
+            <option value="🏗">🏗 Obra</option>
+            <option value="🏠">🏠 Casa</option>
+            <option value="🔨">🔨 Ferramentas</option>
+            <option value="⚡">⚡ Elétrica</option>
+            <option value="🚿">🚿 Hidráulica</option>
+            <option value="🪟">🪟 Esquadrias</option>
+            <option value="🎨">🎨 Pintura</option>
+            <option value="📐">📐 Projetos</option>
+            <option value="🚚">🚚 Logística</option>
+            <option value="🏺">🏺 Outro</option>
+          </select>
+        </div>
+        <div class="form-grid-full">
+          <label class="form-lbl">Descrição (opcional)</label>
+          <textarea id="pf-desc" class="form-input" rows="2" placeholder="Detalhes sobre o que esse pote cobre…"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-secondary danger" onclick="deletePote()" id="pote-del-btn" style="display:none;margin-right:auto">Excluir pote</button>
+      <button class="btn-secondary" onclick="closePoteModal()">Cancelar</button>
+      <button class="btn-primary" onclick="savePote()">Salvar pote</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODAL LANÇAMENTO ════════ -->
+<div id="lanc-modal" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="lanc-modal-title">Novo lançamento</div>
+      <button class="modal-close" onclick="closeLancamentoModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div>
+          <label class="form-lbl">Pote / centro de custo *</label>
+          <select id="lf-pote" class="form-input"></select>
+        </div>
+        <div>
+          <label class="form-lbl">Categoria</label>
+          <select id="lf-cat" class="form-input">
+            <option value="">— sem categoria —</option>
+            <option value="Material">Material</option>
+            <option value="Mão de obra">Mão de obra</option>
+            <option value="Serviço terceirizado">Serviço terceirizado</option>
+            <option value="Equipamento">Equipamento / Aluguel</option>
+            <option value="Taxas">Taxas / Impostos</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </div>
+        <div class="form-grid-full">
+          <label class="form-lbl">Descrição *</label>
+          <input id="lf-desc" class="form-input" placeholder="Ex: Compra de cimento - 50 sacos">
+        </div>
+        <div>
+          <label class="form-lbl">Valor (R$) *</label>
+          <input id="lf-valor" class="form-input" type="number" step="0.01" min="0" placeholder="0,00">
+        </div>
+        <div>
+          <label class="form-lbl">Data *</label>
+          <input id="lf-data" class="form-input" type="date">
+        </div>
+        <div>
+          <label class="form-lbl">Tipo</label>
+          <select id="lf-tipo" class="form-input">
+            <option value="gasto">Gasto realizado</option>
+            <option value="previsto">Previsto / Compromisso</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-lbl">Forma de pagamento</label>
+          <select id="lf-pagto" class="form-input">
+            <option value="">— a definir —</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="PIX">PIX</option>
+            <option value="Transferência">Transferência</option>
+            <option value="Cartão">Cartão</option>
+            <option value="Boleto">Boleto</option>
+            <option value="Cheque">Cheque</option>
+          </select>
+        </div>
+        <div class="form-grid-full">
+          <label class="form-lbl">Observação (opcional)</label>
+          <textarea id="lf-obs" class="form-input" rows="2" placeholder="Nota fiscal, fornecedor, etc."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-secondary danger" onclick="deleteLancamento()" id="lanc-del-btn" style="display:none;margin-right:auto">Excluir</button>
+      <button class="btn-secondary" onclick="closeLancamentoModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveLancamento()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBJoDou1VsHAIAbVjESOGVh23dezmLETrE",
+  authDomain: "franco-e-fragoso-advocacia.firebaseapp.com",
+  databaseURL: "https://franco-e-fragoso-advocacia-default-rtdb.firebaseio.com",
+  projectId: "franco-e-fragoso-advocacia",
+  storageBucket: "franco-e-fragoso-advocacia.firebasestorage.app",
+  messagingSenderId: "1096895063248",
+  appId: "1:1096895063248:web:68a5c866e229124f3faad5"
+};
+
+try {
+  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+  const { getDatabase, ref, onValue, set, update, remove, get } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
+  const { getAuth, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+
+  const app = initializeApp(FIREBASE_CONFIG);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
+
+  // Espera o Firebase Auth restaurar a sessão persistida (IndexedDB) ANTES
+  // de avisar o app que está pronto. Sem isso, no admin (nova aba aberta a
+  // partir de admin.html) os writes saem antes do auth ser restaurado e o
+  // Firebase responde PERMISSION_DENIED pela regra "auth != null".
+  const authReady = new Promise(resolve => {
+    const unsub = onAuthStateChanged(auth, user => {
+      // Resolve sempre, com user (logado) ou null (cliente sem login).
+      // O obra.html já distingue admin vs cliente pelo querystring (?admin=1).
+      unsub();
+      resolve(user);
+    });
+  });
+
+  // Timeout de segurança: se por algum motivo o onAuthStateChanged demorar,
+  // segue mesmo assim (o cliente leitor não precisa de auth).
+  const authTimeout = new Promise(resolve => setTimeout(() => resolve(null), 4000));
+  const user = await Promise.race([authReady, authTimeout]);
+
+  window.__FB__ = { db, ref, onValue, set, update, remove, get, auth, currentUser: user };
+  window.dispatchEvent(new CustomEvent('firebase-ready'));
+} catch (err) {
+  console.error('[Firebase] erro ao inicializar:', err);
+  window.__FB_ERROR__ = err.message;
+  window.dispatchEvent(new CustomEvent('firebase-failed'));
+}
+</script>
+
+<script>
+/* ═══════════════════════════════════════════
+   CONTEXT (obra + código via querystring)
+═══════════════════════════════════════════ */
+const params = new URLSearchParams(window.location.search);
+const OBRA_ID = params.get('id');
+const ACCESS_CODE = (params.get('code') || '').toUpperCase();
+const IS_ADMIN = params.get('admin') === '1';
+
+/* ═══════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════ */
+const DEPT_PALETTE = ['#1A6B9A','#B07010','#5E3FA0','#1A8A5B','#2A4E7A','#A04020','#1A7A60','#7A2A6B','#2A7A40','#8B4000','#1A4A7A','#6B1A6B'];
+let DEPT_COLOR = {};
+let TASKS_DEF = [];
+let obraData = null;
+let CHART_START_STR = null;
+let CHART_END_STR = null;
+let state = {};                 // { taskId: 'pending'|'progress'|'done' }
+let fbSync = null;
+let syncMode = 'local';
+let isApplyingRemote = false;
+
+const LS_PREFIX = 'ff_gantt_v4_';
+const LS_NOTIF_KEY = 'ff_gantt_notif_v1';
+
+function lsKey() { return LS_PREFIX + (OBRA_ID || 'default'); }
+
+function loadLocal() {
+  try { state = JSON.parse(localStorage.getItem(lsKey()) || '{}'); }
+  catch(e) { state = {}; }
+}
+function saveLocal() {
+  try { localStorage.setItem(lsKey(), JSON.stringify(state)); } catch(e) {}
+}
+
+function getStatus(id) { return state[id] || 'pending'; }
+
+function cycleStatus(id) {
+  if (!IS_ADMIN) return {prev:null, next:null}; // client read-only (guard #2)
+  const cycle = { pending:'progress', progress:'done', done:'pending' };
+  const prev = getStatus(id);
+  const next = cycle[prev];
+  state[id] = next;
+  saveLocal();
+  pushRemote(id, next);
+  return {prev, next};
+}
+
+async function pushRemote(id, value) {
+  if (!IS_ADMIN) return; // client read-only (guard #3)
+  if (!fbSync) return;
+  showSaving();
+  try {
+    await fbSync.set(fbSync.ref(fbSync.db, `progress/${OBRA_ID}/${id}`), value);
+    await fbSync.set(fbSync.ref(fbSync.db, `meta/${OBRA_ID}/lastUpdate`), Date.now());
+    showOnlineSaved();
+  } catch(e) {
+    console.warn('[sync] falha:', e);
+    showError('Erro ao sincronizar');
+  }
+}
+
+/* ═══════════════════════════════════════════
+   SAVE INDICATOR
+═══════════════════════════════════════════ */
+const saveInd = () => document.getElementById('save-ind');
+const saveLbl = () => document.getElementById('save-lbl');
+function setIndicatorClass(cls) { const el = saveInd(); if (el) el.className = 'save-indicator ' + cls; }
+function showSaving()      { setIndicatorClass('saving'); saveLbl().textContent = 'Salvando...'; }
+function showOnlineSaved() { syncMode = 'online';  setIndicatorClass('live');    saveLbl().textContent = 'Online · sincronizado'; }
+function showLocalSaved()  { syncMode = 'local';   setIndicatorClass('');        saveLbl().textContent = 'Salvo (local)'; }
+function showOffline()     { syncMode = 'offline'; setIndicatorClass('offline'); saveLbl().textContent = 'Offline — salvo local'; }
+function showError(msg)    { syncMode = 'error';   setIndicatorClass('error');   saveLbl().textContent = msg || 'Erro'; }
+
+/* ═══════════════════════════════════════════
+   TOASTS
+═══════════════════════════════════════════ */
+function toast({title, msg, kind='success', duration=4200, icon}) {
+  const stack = document.getElementById('toast-stack');
+  if (!stack) return;
+  const el = document.createElement('div');
+  el.className = 'toast ' + (kind==='info'?'info':kind==='warn'?'warn':kind==='err'?'err':'');
+  const ic = icon || (kind==='success'?'✓':kind==='info'?'ℹ':kind==='err'?'✕':'!');
+  el.innerHTML = `
+    <div class="toast-icon">${ic}</div>
+    <div class="toast-body">
+      <div class="toast-title">${title||''}</div>
+      ${msg?`<div class="toast-msg">${msg}</div>`:''}
+    </div>
+    <button class="toast-close" aria-label="Fechar">×</button>
+  `;
+  stack.appendChild(el);
+  const close = () => { el.classList.add('exit'); setTimeout(()=>el.remove(), 350); };
+  el.querySelector('.toast-close').addEventListener('click', close);
+  setTimeout(close, duration);
+}
+
+/* ═══════════════════════════════════════════
+   ERROR SCREEN
+═══════════════════════════════════════════ */
+function showErrorScreen(title, msg) {
+  document.getElementById('loading-screen').classList.add('hide');
+  document.getElementById('main').style.display = 'none';
+  document.getElementById('error-title').textContent = title;
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('error-screen').style.display = 'block';
+}
+
+function hideLoading() {
+  setTimeout(() => {
+    document.getElementById('loading-screen').classList.add('hide');
+    document.getElementById('main').style.display = 'block';
+  }, 300);
+}
+
+/* ═══════════════════════════════════════════
+   ACCESS VALIDATION + LOAD
+═══════════════════════════════════════════ */
+async function bootstrap() {
+  if (!OBRA_ID) {
+    showErrorScreen('Obra não informada', 'É preciso um código de acesso pra abrir uma obra.');
+    return;
+  }
+
+  if (!fbSync) {
+    showErrorScreen('Sem conexão', 'Não foi possível conectar ao servidor. Tente novamente em alguns instantes.');
+    return;
+  }
+
+  // Modo admin: precisa estar autenticado pra que os writes passem na regra
+  // "auth != null" do Firebase. Se o admin abriu essa aba sem ter feito login
+  // antes em admin.html, oferecemos um redirect.
+  if (IS_ADMIN && !(fbSync.auth && fbSync.auth.currentUser)) {
+    showErrorScreen(
+      'Sessão de admin expirada',
+      'Faça login novamente em admin.html antes de abrir a obra. ' +
+      'Sem login, o Firebase nega permissão para salvar alterações.'
+    );
+    // Botão de retorno
+    setTimeout(() => {
+      const errMsg = document.getElementById('error-msg');
+      if (errMsg && !document.getElementById('go-admin-btn')) {
+        const btn = document.createElement('a');
+        btn.id = 'go-admin-btn';
+        btn.href = 'admin.html';
+        btn.textContent = 'Ir para o login do admin';
+        btn.style.cssText = 'display:inline-block;margin-top:14px;padding:10px 18px;background:var(--teal,#1A7A9A);color:#fff;border-radius:8px;text-decoration:none;font-weight:600';
+        errMsg.appendChild(document.createElement('br'));
+        errMsg.appendChild(btn);
+      }
+    }, 50);
+    return;
+  }
+
+  try {
+    // Se não for admin, valida o código
+    if (!IS_ADMIN) {
+      if (!ACCESS_CODE) {
+        showErrorScreen('Código de acesso ausente', 'Entre pela tela inicial usando um código.');
+        return;
+      }
+      const codeSnap = await fbSync.get(fbSync.ref(fbSync.db, 'codes/' + ACCESS_CODE));
+      const codeInfo = codeSnap.val();
+      if (!codeInfo || codeInfo.obraId !== OBRA_ID || codeInfo.ativo === false) {
+        showErrorScreen('Acesso negado', 'O código não corresponde a esta obra ou foi desativado.');
+        return;
+      }
+    }
+
+    // Carrega obra
+    const obraSnap = await fbSync.get(fbSync.ref(fbSync.db, 'obras/' + OBRA_ID));
+    obraData = obraSnap.val();
+    if (!obraData) {
+      showErrorScreen('Obra não encontrada', 'Essa obra foi removida ou nunca existiu.');
+      return;
+    }
+
+    // Carrega branding (user padrão, com override por obra)
+    await loadAndApplyBranding(obraData);
+
+    // Preenche header com dados da obra
+    document.title = `${obraData.nome} — ${currentBranding.companyName || 'Plan&jar'}`;
+    document.getElementById('hdr-title').textContent = obraData.nome;
+    document.getElementById('client-name').textContent = obraData.cliente || obraData.nome;
+    document.getElementById('client-sub').textContent = obraData.sub || 'Cliente';
+    document.getElementById('client-logo').textContent = (obraData.cliente || obraData.nome || '?').trim().charAt(0).toUpperCase();
+    if (IS_ADMIN) {
+      document.getElementById('admin-badge-wrap').style.display = '';
+      document.body.classList.add('is-admin');
+    }
+
+    CHART_START_STR = obraData.start;
+    CHART_END_STR   = obraData.end;
+
+    // Carrega tasks e subscreve progresso
+    subscribeTasks();
+    subscribeProgress();
+    subscribeFinancials();
+    hideLoading();
+
+  } catch(e) {
+    console.error(e);
+    showErrorScreen('Erro ao carregar', 'Não foi possível carregar os dados desta obra: ' + e.message);
+  }
+}
+
+/* ═══════════════════════════════════════════
+   BRANDING (white-label)
+═══════════════════════════════════════════ */
+let currentBranding = {
+  companyName: 'Plan&jar',
+  companyTag:  'Construa com clareza',
+  primaryColor:'#1A7A9A',
+  secondaryColor:'#2A5580',
+  logoUrl: null,    // se tiver imagem
+  logoInitial: 'P', // fallback colorido
+};
+
+async function loadAndApplyBranding(obraData) {
+  try {
+    let companyBranding = null;
+    let obraBranding = obraData.branding || null;
+
+    // Multi-tenant: branding vive em companies/{companyId}/branding.
+    let companyId = obraData.companyId;
+
+    // Fallback legado: se a obra ainda tem ownerUid (antes da migração) e
+    // o usuário logado é admin, tenta resolver via users/{uid}/companyId.
+    if (!companyId && IS_ADMIN && fbSync.auth && fbSync.auth.currentUser) {
+      try {
+        const uid = fbSync.auth.currentUser.uid;
+        const profileSnap = await fbSync.get(fbSync.ref(fbSync.db, `users/${uid}`));
+        const profile = profileSnap.val();
+        if (profile && profile.companyId) companyId = profile.companyId;
+      } catch(_) { /* ignore */ }
+    }
+
+    if (companyId) {
+      try {
+        const csnap = await fbSync.get(fbSync.ref(fbSync.db, `companies/${companyId}/branding`));
+        companyBranding = csnap.val();
+      } catch(e) {
+        console.warn('[branding] falha ao ler company branding', e);
+      }
+    }
+
+    // Fallback legado adicional: branding antigo em settings/users/{uid}/branding,
+    // pra cobrir o intervalo entre subir o código novo e a migração rodar.
+    if (!companyBranding) {
+      let ownerUid = obraData.ownerUid;
+      if (!ownerUid && IS_ADMIN && fbSync.auth && fbSync.auth.currentUser) {
+        ownerUid = fbSync.auth.currentUser.uid;
+      }
+      if (ownerUid) {
+        try {
+          const usnap = await fbSync.get(fbSync.ref(fbSync.db, `settings/users/${ownerUid}/branding`));
+          companyBranding = usnap.val();
+        } catch(_) { /* sem permissão é ok */ }
+      }
+    }
+
+    // Override: obra > company > default
+    const merged = Object.assign(
+      {},
+      currentBranding,
+      companyBranding || {},
+      obraBranding || {}
+    );
+    currentBranding = merged;
+  } catch(e) {
+    console.warn('[branding] falha ao carregar, usando padrão', e);
+  }
+  applyBranding();
+}
+
+function applyBranding() {
+  const b = currentBranding;
+  // Variáveis de cor
+  const root = document.documentElement;
+  if (b.primaryColor)   root.style.setProperty('--brand-color', b.primaryColor);
+  if (b.secondaryColor) root.style.setProperty('--brand-color-2', b.secondaryColor);
+  // Substitui --teal e --navy-light no escopo do body para aplicar nos componentes existentes
+  if (b.primaryColor) {
+    root.style.setProperty('--teal', b.primaryColor);
+    root.style.setProperty('--bar-proj', b.primaryColor);
+  }
+  if (b.secondaryColor) {
+    root.style.setProperty('--navy-light', b.secondaryColor);
+  }
+
+  // Texto da marca
+  const nameEl = document.getElementById('brand-name');
+  const tagEl  = document.getElementById('brand-tag');
+  if (nameEl) nameEl.textContent = b.companyName || 'Plan&jar';
+  if (tagEl)  tagEl.textContent  = b.companyTag  || 'Construa com clareza';
+
+  // Hint e footer
+  const hintBy = document.getElementById('hint-by');
+  if (hintBy) hintBy.textContent = b.companyName ? `pela equipe ${b.companyName}` : '';
+  const footerComp = document.getElementById('footer-company');
+  if (footerComp) footerComp.textContent = `${b.companyName || 'Plan&jar'}${b.companyTag ? ' · ' + b.companyTag : ''}`;
+
+  // Logo: se tem URL, usa imagem; senão, usa inicial colorida
+  const fb = document.getElementById('brand-logo-fb');
+  if (!fb) return;
+  const parent = fb.parentNode;
+  // Remove imagem antiga se houver
+  const oldImg = parent.querySelector('.brand-logo-img');
+  if (oldImg) oldImg.remove();
+
+  if (b.logoUrl) {
+    fb.style.display = 'none';
+    const img = document.createElement('img');
+    img.src = b.logoUrl;
+    img.className = 'brand-logo-img';
+    img.alt = b.companyName || 'Logo';
+    img.onerror = () => { img.remove(); fb.style.display = ''; };
+    parent.insertBefore(img, fb);
+  } else {
+    fb.style.display = '';
+    const initial = (b.logoInitial || (b.companyName || 'P').trim().charAt(0)).toUpperCase();
+    fb.textContent = initial;
+  }
+}
+
+function subscribeTasks() {
+  fbSync.onValue(fbSync.ref(fbSync.db, `tasks/${OBRA_ID}/definition`), snap => {
+    const def = snap.val() || {};
+    TASKS_DEF = Object.entries(def)
+      .map(([id, t]) => ({ ...t, id }))
+      .sort((a,b) => (a.order ?? 999) - (b.order ?? 999));
+
+    // Constrói paleta dinâmica por departamento
+    DEPT_COLOR = {};
+    const depts = [...new Set(TASKS_DEF.map(t => t.dept).filter(Boolean))];
+    depts.forEach((d, i) => DEPT_COLOR[d] = DEPT_PALETTE[i % DEPT_PALETTE.length]);
+
+    // Se período da obra for vazio, deriva
+    if (TASKS_DEF.length && (!CHART_START_STR || !CHART_END_STR)) {
+      CHART_START_STR = TASKS_DEF.reduce((a,t) => !a || t.start < a ? t.start : a, null);
+      CHART_END_STR   = TASKS_DEF.reduce((a,t) => !a || t.end > a ? t.end : a, null);
+    }
+    render();
+    // Se a aba Financeiro está aberta nas sub-abas que dependem das tasks, re-renderiza
+    if (currentMainTab === 'financeiro' &&
+        (currentFinSub === 'servicos' || currentFinSub === 'medicoes' || currentFinSub === 'potes')) {
+      renderFinanceiro();
+    }
+  }, err => {
+    console.error('[tasks]', err);
+    toast({title:'Erro ao carregar atividades', msg:err.message, kind:'err'});
+  });
+}
+
+let remoteUpdatedIds = new Set();
+
+function subscribeProgress() {
+  fbSync.onValue(fbSync.ref(fbSync.db, `progress/${OBRA_ID}`), snap => {
+    const remote = snap.val() || {};
+    const changedIds = [];
+    TASKS_DEF.forEach(t => {
+      const before = state[t.id];
+      const after  = remote[t.id] || 'pending';
+      if (before !== after && before !== undefined) changedIds.push(t.id);
+    });
+    isApplyingRemote = true;
+    const merged = {};
+    TASKS_DEF.forEach(t => { if (remote[t.id]) merged[t.id] = remote[t.id]; });
+    state = merged;
+    saveLocal();
+    changedIds.forEach(id => remoteUpdatedIds.add(id));
+    render();
+    isApplyingRemote = false;
+    showOnlineSaved();
+    if (changedIds.length) setTimeout(() => { remoteUpdatedIds.clear(); render(); }, 1500);
+    // Status afeta o avanço físico — re-renderiza a aba Medições e o resumo
+    if (currentMainTab === 'financeiro' && (currentFinSub === 'medicoes' || currentFinSub === 'servicos')) {
+      renderFinanceiro();
+    }
+  }, err => {
+    console.error('[progress]', err);
+    showError('Sem permissão');
+  });
+}
+
+window.addEventListener('firebase-ready', () => {
+  fbSync = window.__FB__;
+  window.addEventListener('online',  () => showOnlineSaved());
+  window.addEventListener('offline', () => showOffline());
+  bootstrap();
+});
+window.addEventListener('firebase-failed', () => {
+  showErrorScreen('Erro no servidor', 'Não foi possível conectar ao banco de dados.');
+});
+
+/* ═══════════════════════════════════════════
+   DATES
+═══════════════════════════════════════════ */
+function parseDate(str) { const [y,m,d] = str.split('-').map(Number); return new Date(y, m-1, d); }
+function dayOff(str, ref) { return Math.round((parseDate(str) - ref) / 86400000); }
+function fmtDate(str) {
+  const [,m,d] = str.split('-');
+  const mnames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  return `${parseInt(d)} ${mnames[parseInt(m)-1]}`;
+}
+function todayStr() {
+  const n = new Date();
+  return `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}-${String(n.getDate()).padStart(2,'0')}`;
+}
+function fmtFull(date) {
+  const dias = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  return `${dias[date.getDay()]}, ${date.getDate()} de ${meses[date.getMonth()]} de ${date.getFullYear()}`;
+}
+function fmtDateBr(iso) {
+  if (!iso) return '—';
+  const [y,m,d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+/* ═══════════════════════════════════════════
+   NOTIFICATIONS
+═══════════════════════════════════════════ */
+let notifEnabled = false;
+function loadNotifPref() {
+  try { notifEnabled = localStorage.getItem(LS_NOTIF_KEY) === '1'; } catch(e){ notifEnabled = false; }
+  updateNotifBtn();
+}
+function saveNotifPref() { try { localStorage.setItem(LS_NOTIF_KEY, notifEnabled ? '1':'0'); } catch(e){} }
+function updateNotifBtn() {
+  const btn = document.getElementById('notif-btn');
+  const lbl = document.getElementById('notif-label');
+  const ico = document.getElementById('notif-icon');
+  if (!btn) return;
+  if (!('Notification' in window)) {
+    btn.classList.remove('on'); lbl.textContent = 'Indisponível'; ico.textContent = '🔕';
+    btn.disabled = true; btn.style.opacity = '.55'; btn.style.cursor = 'not-allowed';
+    return;
+  }
+  if (notifEnabled && Notification.permission === 'granted') {
+    btn.classList.add('on'); lbl.textContent = 'Notificações ativas'; ico.textContent = '🔔';
+  } else {
+    btn.classList.remove('on'); lbl.textContent = 'Notificações'; ico.textContent = '🔕';
+  }
+}
+async function toggleNotifications() {
+  if (!('Notification' in window)) {
+    toast({title:'Navegador não compatível', kind:'warn'}); return;
+  }
+  if (notifEnabled) {
+    notifEnabled = false; saveNotifPref(); updateNotifBtn();
+    toast({title:'Notificações desativadas', kind:'info', duration:2600});
+    return;
+  }
+  let perm = Notification.permission;
+  if (perm === 'default') perm = await Notification.requestPermission();
+  if (perm === 'granted') {
+    notifEnabled = true; saveNotifPref(); updateNotifBtn();
+    toast({title:'Notificações ativadas', msg:'Você será alertado quando uma atividade for concluída.', kind:'success'});
+    try { new Notification('Cronograma — ' + (currentBranding.companyName || 'Plan&jar'), {body:'Notificações ativadas ✓'}); } catch(e){}
+  } else if (perm === 'denied') {
+    toast({title:'Permissão bloqueada', msg:'Libere notificações nas configurações do navegador.', kind:'warn', duration:6000});
+  }
+}
+function fireNotification(task, source='local') {
+  if (!notifEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
+  try {
+    const prefix = source==='remote' ? '🔄 Concluída (outro dispositivo)' : '✓ Atividade concluída';
+    new Notification(prefix, { body: `${task.name}\n${task.phase === 'PROJETOS' ? 'Projetos' : 'Obra'} — ${task.dept}`, tag: 'task-' + task.id });
+  } catch(e) {}
+}
+
+/* ═══════════════════════════════════════════
+   FILTER
+═══════════════════════════════════════════ */
+let currentFilter = 'all';
+function setFilter(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  render();
+}
+function matchFilter(task) {
+  if (currentFilter === 'all') return true;
+  if (currentFilter === 'PROJETOS' || currentFilter === 'OBRA') return task.phase === currentFilter;
+  const s = getStatus(task.id);
+  if (currentFilter === 'pending')  return s === 'pending';
+  if (currentFilter === 'progress') return s === 'progress';
+  if (currentFilter === 'done')     return s === 'done';
+  return true;
+}
+
+/* ═══════════════════════════════════════════
+   MONTH SEGMENTS (dynamic range)
+═══════════════════════════════════════════ */
+function buildMonthSegments(startStr, endStr) {
+  const ref = parseDate(startStr);
+  const endDay = dayOff(endStr, ref);
+  const segs = [];
+  let cur = new Date(ref.getFullYear(), ref.getMonth(), 1);
+  const mnames = ['JAN','FEV','MAR','ABR','MAI','JUN','JUL','AGO','SET','OUT','NOV','DEZ'];
+  while (true) {
+    const nextMonth = new Date(cur.getFullYear(), cur.getMonth()+1, 1);
+    const segStart = cur < ref ? ref : cur;
+    const segEnd   = new Date(Math.min(nextMonth - 86400000, parseDate(endStr)));
+    const s = Math.max(0, Math.round((segStart - ref) / 86400000));
+    const e = Math.min(endDay, Math.round((segEnd - ref) / 86400000));
+    if (e >= s) segs.push({ label: mnames[cur.getMonth()] + (cur.getFullYear() % 100 !== ref.getFullYear() % 100 ? '/' + String(cur.getFullYear()).slice(-2) : ''), days: e - s + 1, startDay: s });
+    cur = nextMonth;
+    if (cur > parseDate(endStr)) break;
+  }
+  return segs;
+}
+
+function buildWeekLabels(startStr, endStr) {
+  const ref = parseDate(startStr);
+  const endDay = dayOff(endStr, ref);
+  const mnames = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+  const labels = [];
+  for (let d=0; d<=endDay; d+=7) {
+    const date = new Date(ref.getFullYear(), ref.getMonth(), ref.getDate()+d);
+    labels.push({ d, l: `${String(date.getDate()).padStart(2,'0')}/${mnames[date.getMonth()]}` });
+  }
+  return labels;
+}
+
+/* ═══════════════════════════════════════════
+   RENDER
+═══════════════════════════════════════════ */
+const COL_NAME  = 280;
+const COL_DAYS  = 48;
+const COL_DATES = 88;
+const COL_STAT  = 120;
+const COL_REMAIN = 90;   // Prazo restante (admin)
+const COL_TL_MIN = 500;
+
+const STATUS_CFG = {
+  pending:  { cls:'s-pending',  label:'Pendente'    },
+  progress: { cls:'s-progress', label:'Em Andamento'},
+  done:     { cls:'s-done',     label:'Concluído'   },
+};
+
+let justDoneIds = new Set();
+
+/* Calcula prazo restante (em dias) para uma atividade.
+   Regras:
+   - se concluída, retorna null (mostra "—")
+   - se hoje < início, retorna dias até o início (positivo, "para começar")
+   - se hoje entre início e fim, retorna dias até o fim (positivo, "restantes")
+   - se hoje > fim e não concluída, retorna número negativo ("atrasada") */
+function computeRemaining(task, status) {
+  if (status === 'done') return { days: null, kind: 'done' };
+  const today = parseDate(todayStr());
+  const start = parseDate(task.start);
+  const end   = parseDate(task.end);
+  const msDay = 86400000;
+  if (today < start) {
+    const diff = Math.round((start - today) / msDay);
+    return { days: diff, kind: 'future', label: 'p/ iniciar' };
+  }
+  if (today > end) {
+    const diff = Math.round((today - end) / msDay);
+    return { days: -diff, kind: 'late', label: 'em atraso' };
+  }
+  // hoje entre início e fim — inclui o dia de hoje
+  const diff = Math.round((end - today) / msDay) + 1;
+  const kind = diff <= 3 ? 'soon' : 'ok';
+  return { days: diff, kind, label: 'restantes' };
+}
+
+function fmtRemaining(rem) {
+  if (rem.kind === 'done') return `<div class="remain-val remain-done">—</div><div class="remain-unit">concluída</div>`;
+  if (rem.kind === 'late') {
+    const abs = Math.abs(rem.days);
+    return `<div class="remain-val remain-late">−${abs}d</div><div class="remain-unit">em atraso</div>`;
+  }
+  const cls = rem.kind === 'future' ? 'remain-future' : (rem.kind === 'soon' ? 'remain-soon' : 'remain-ok');
+  return `<div class="remain-val ${cls}">${rem.days}d</div><div class="remain-unit">${rem.label}</div>`;
+}
+
+function render() {
+  const root = document.getElementById('gantt-root');
+
+  if (!TASKS_DEF.length) {
+    root.innerHTML = `
+      <div class="empty-schedule">
+        <div class="big-icon">📋</div>
+        <h3>Cronograma em preparação</h3>
+        <p>A construtora ainda não importou as atividades desta obra. Assim que a planilha for enviada, o cronograma aparece aqui automaticamente.</p>
+      </div>`;
+    // Zera KPIs
+    ['kpi-total','kpi-done','kpi-prog','kpi-pend'].forEach(id => document.getElementById(id).textContent = '0');
+    document.getElementById('prog-fill').style.width = '0%';
+    document.getElementById('prog-pct').textContent = '0%';
+    document.getElementById('hdr-sub').textContent = 'Aguardando importação da planilha';
+    document.getElementById('today-badge').textContent = `Hoje: ${fmtFull(new Date())}`;
+    return;
+  }
+
+  if (!CHART_START_STR || !CHART_END_STR) return;
+
+  const CHART_REF = parseDate(CHART_START_STR);
+  const TOTAL_DAYS = dayOff(CHART_END_STR, CHART_REF) + 1;
+
+  const today = new Date();
+  const todayS = todayStr();
+  const todayOff = dayOff(todayS, CHART_REF);
+
+  // Header subtitle: "Abril – Junho 2026"
+  const startD = parseDate(CHART_START_STR), endD = parseDate(CHART_END_STR);
+  const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+  const periodLabel = startD.getFullYear() === endD.getFullYear()
+    ? `${meses[startD.getMonth()]} – ${meses[endD.getMonth()]} ${startD.getFullYear()}`
+    : `${meses[startD.getMonth()]}/${startD.getFullYear()} – ${meses[endD.getMonth()]}/${endD.getFullYear()}`;
+  document.getElementById('hdr-sub').textContent = `${periodLabel}  ·  Atualizado em ${fmtFull(today)}`;
+  document.getElementById('today-badge').textContent = `Hoje: ${fmtFull(today)}`;
+  document.getElementById('footer-rev').textContent = `Cronograma de Obra — Atualizado ${today.toLocaleDateString('pt-BR')}`;
+
+  // KPIs
+  const total = TASKS_DEF.length;
+  const done  = TASKS_DEF.filter(t => getStatus(t.id) === 'done').length;
+  const prog  = TASKS_DEF.filter(t => getStatus(t.id) === 'progress').length;
+  const pend  = total - done - prog;
+  const pct   = Math.round((done / total) * 100);
+
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-pct').textContent  = pct + '%';
+  document.getElementById('kpi-total').textContent = total;
+  document.getElementById('kpi-done').textContent  = done;
+  document.getElementById('kpi-prog').textContent  = prog;
+  document.getElementById('kpi-pend').textContent  = pend;
+  document.getElementById('kpi-end').textContent   = fmtDateBr(CHART_END_STR);
+
+  const critTask = TASKS_DEF.find(t => t.critical);
+  if (critTask) {
+    const firstWord = critTask.name.split(/\s+/)[0];
+    document.getElementById('kpi-crit').textContent = `${firstWord} — ${critTask.days}d`;
+  } else {
+    document.getElementById('kpi-crit').textContent = '—';
+  }
+
+  // Layout
+  const availW = root.parentElement.clientWidth || 1100;
+  const remainW = IS_ADMIN ? COL_REMAIN : 0;
+  const tlW = Math.max(COL_TL_MIN, availW - COL_NAME - COL_DAYS - COL_DATES - COL_STAT - remainW - 4);
+  const ppd = tlW / TOTAL_DAYS;
+  const todayX = Math.max(0, Math.min(tlW, todayOff * ppd));
+
+  const months = buildMonthSegments(CHART_START_STR, CHART_END_STR);
+  const weekStarts = [];
+  for (let d=0; d<=TOTAL_DAYS; d+=7) weekStarts.push(d);
+  const weekLabels = buildWeekLabels(CHART_START_STR, CHART_END_STR);
+
+  const colspanHdr = IS_ADMIN ? 5 : 4;
+  const remainCol = IS_ADMIN ? `<col style="width:${COL_REMAIN}px">` : '';
+  const remainHdr = IS_ADMIN ? `<th class="th-center col-remain" title="Prazo restante (visível só para admin)">Prazo Rest.</th>` : '';
+
+  let h = `<table class="gantt">
+  <colgroup>
+    <col style="width:${COL_NAME}px">
+    <col style="width:${COL_DAYS}px">
+    <col style="width:${COL_DATES}px">
+    <col style="width:${COL_STAT}px">
+    ${remainCol}
+    <col style="width:${tlW}px">
+  </colgroup>
+  <thead>
+    <tr class="row-months">
+      <th class="th-tl col-name">Atividade / Entregável</th>
+      <th class="th-center col-days">Dias</th>
+      <th class="th-center col-dates">Entrega</th>
+      <th class="th-center col-status">Status</th>
+      ${remainHdr}
+      <th style="padding:0;background:var(--navy)">
+        <div style="display:flex">`;
+
+  months.forEach(m => {
+    h += `<div style="flex:none;width:${m.days*ppd}px;text-align:center;padding:8px 0;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:#fff;border-right:1px solid rgba(255,255,255,0.12)">${m.label}</div>`;
+  });
+
+  h += `</div></th></tr>
+    <tr class="row-weeks">
+      <td class="td-blank" colspan="${colspanHdr}" style="border-right:2px solid rgba(255,255,255,0.1)"></td>
+      <td style="position:relative;height:22px;padding:0">`;
+
+  h += `<div class="today-pin-tl" style="left:${todayX}px">Hoje</div>`;
+  h += `<div class="today-vline" style="left:${todayX}px;top:0"></div>`;
+
+  weekLabels.forEach(w => {
+    if (w.d > 0 && w.d < TOTAL_DAYS) h += `<div style="position:absolute;left:${w.d*ppd}px;top:0;bottom:0;border-left:1px solid rgba(255,255,255,0.08);padding-left:3px;display:flex;align-items:center"><span style="font-size:8px;color:rgba(255,255,255,0.38);white-space:nowrap">${w.l}</span></div>`;
+  });
+
+  h += `</td></tr>
+  </thead><tbody>`;
+
+  let lastPhase = null;
+  let rowIndex = 0;
+  TASKS_DEF.forEach((t, idx) => {
+    if (t.phase !== lastPhase) {
+      const hasVisible = TASKS_DEF.some(f => f.phase === t.phase && matchFilter(f));
+      if (hasVisible) {
+        lastPhase = t.phase;
+        const icon  = t.phase === 'PROJETOS' ? '📐' : '🏗';
+        const lbl   = t.phase === 'PROJETOS' ? 'PROJETOS E APROVAÇÕES' : 'EXECUÇÃO DE OBRA';
+        const phcls = t.phase === 'PROJETOS' ? 'ph-proj' : 'ph-obra';
+        h += `<tr class="phase-row ${phcls}"><td colspan="${IS_ADMIN ? 6 : 5}">${icon}&ensp;${lbl}</td></tr>`;
+      } else {
+        lastPhase = t.phase;
+      }
+    }
+
+    if (!matchFilter(t)) return;
+
+    const st  = getStatus(t.id);
+    const sc  = STATUS_CFG[st];
+    const rowBg = rowIndex % 2 === 0 ? '#fff' : 'var(--row-alt)';
+    rowIndex++;
+    const doneCls = st === 'done' ? 'done' : '';
+    const justDoneCls = justDoneIds.has(t.id) ? 'just-done' : '';
+    const remoteCls = remoteUpdatedIds.has(t.id) ? 'remote-update' : '';
+    const pendingCls = (typeof pendingChanges !== 'undefined' && pendingChanges.has(t.id)) ? 'has-pending' : '';
+    const animDelay = Math.min(rowIndex * 22, 600);
+
+    const sDay = Math.max(0, dayOff(t.start, CHART_REF));
+    const eDay = Math.min(TOTAL_DAYS, dayOff(t.end, CHART_REF) + 1);
+    const barL = sDay * ppd;
+    const barW = Math.max(3, (eDay - sDay) * ppd);
+
+    let barColor = t.phase === 'PROJETOS' ? 'var(--bar-proj)' : 'var(--bar-obra)';
+    let barClass = 'bar';
+    let barStyle = `left:${barL}px;width:${barW}px;background:${barColor};animation-delay:${animDelay}ms`;
+    if (t.critical) { barClass = 'bar bar-crit'; barStyle = `left:${barL}px;width:${barW}px;animation-delay:${animDelay}ms`; }
+    if (st === 'done') barClass += ' bar-done';
+    const checkmark = st === 'done' ? '✓ ' : '';
+    const daysLabel = barW > 28 ? (t.days + 'd') : '';
+
+    // Prazo restante (somente admin)
+    const remainCell = IS_ADMIN
+      ? `<td class="td-remaining">${fmtRemaining(computeRemaining(t, st))}</td>`
+      : '';
+
+    // Handles de resize (somente admin, criados via JS)
+    const handlesHtml = IS_ADMIN
+      ? '<div class="resize-handle left" data-edge="left"></div><div class="resize-handle right" data-edge="right"></div>'
+      : '';
+
+    h += `<tr class="task-row ${doneCls} ${justDoneCls} ${remoteCls} ${pendingCls}" style="background:${rowBg};animation-delay:${animDelay}ms" data-task-id="${t.id}" onclick="onRowClick(event,'${t.id}')">
+      <td class="td-name">
+        <div class="tname">${t.critical ? '⚡ ' : ''}${checkmark}${escapeHtml(t.name)}</div>
+        <div class="tdept">
+          <span class="dept-dot" style="background:${DEPT_COLOR[t.dept]||'#888'}"></span>
+          ${escapeHtml(t.dept||'')}
+        </div>
+      </td>
+      <td class="td-days"><div class="dval">${t.days}</div><div class="dunit">dias</div></td>
+      <td class="td-dates"><div class="dstart">${fmtDate(t.start)}</div><div class="dend">${fmtDate(t.end)}</div></td>
+      <td class="td-status">
+        <div class="status-pill ${sc.cls}" onclick="onStatusClick(event,'${t.id}')" title="${IS_ADMIN ? 'Clique para alterar status' : ''}">
+          ${sc.label}
+        </div>
+      </td>
+      ${remainCell}
+      <td class="td-timeline" data-task-id="${t.id}" data-ppd="${ppd}" data-tlw="${tlW}">
+        ${weekStarts.filter(d=>d>0&&d<TOTAL_DAYS).map(d=>`<div class="wline" style="left:${d*ppd}px"></div>`).join('')}
+        <div class="today-vline" style="left:${todayX}px;top:0"></div>
+        <div class="${barClass}" style="${barStyle}" data-task-id="${t.id}" data-bar>
+          ${handlesHtml}
+          <span>${daysLabel}</span>
+        </div>
+      </td>
+    </tr>`;
+  });
+
+  h += `</tbody></table>`;
+  root.innerHTML = h;
+
+  // Ativa drag/resize só pra admin
+  if (IS_ADMIN) attachBarInteractions();
+
+  if (justDoneIds.size) setTimeout(() => { justDoneIds.clear(); }, 900);
+}
+
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+/* ═══════════════════════════════════════════
+   GANTT EDIT (drag & resize de barras) — admin
+═══════════════════════════════════════════ */
+let dragCtx = null;     // contexto do arrasto atual
+let pendingDateSave = null; // último estado a salvar
+let saveDebounceTimer = null;
+
+function isoFromDayOff(dayOff) {
+  const d = parseDate(CHART_START_STR);
+  d.setDate(d.getDate() + dayOff);
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const dd = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${dd}`;
+}
+
+function showDragTooltip(x, y, label, content) {
+  const tip = document.getElementById('drag-tooltip');
+  document.getElementById('drag-tip-label').textContent = label;
+  document.getElementById('drag-tip-content').innerHTML = content;
+  tip.style.left = (x + 14) + 'px';
+  tip.style.top  = (y + 14) + 'px';
+  tip.classList.add('show');
+}
+function hideDragTooltip() {
+  document.getElementById('drag-tooltip').classList.remove('show');
+}
+
+function attachBarInteractions() {
+  document.querySelectorAll('[data-bar]').forEach(bar => {
+    // Evita registrar duas vezes (renderização re-cria os elementos, então isso é seguro)
+    bar.addEventListener('mousedown', onBarMouseDown);
+    bar.addEventListener('touchstart', onBarMouseDown, { passive:false });
+  });
+}
+
+function onBarMouseDown(e) {
+  if (!IS_ADMIN) return;
+  // Ignora se for um clique simples na pílula de status (evento separado)
+  // Mas o bar não tem pill dentro — então qualquer clique aqui inicia o drag.
+
+  const isTouch = e.type === 'touchstart';
+  const point = isTouch ? e.touches[0] : e;
+  const target = e.target;
+  const bar = e.currentTarget;
+  const taskId = bar.dataset.taskId;
+  const task = TASKS_DEF.find(t => t.id === taskId);
+  if (!task) return;
+
+  // Identifica se é resize (pega borda) ou move (pega centro)
+  let mode = 'move';
+  if (target.classList && target.classList.contains('resize-handle')) {
+    mode = target.dataset.edge === 'left' ? 'resize-left' : 'resize-right';
+  }
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const cell = bar.parentElement; // td.td-timeline
+  const ppd = parseFloat(cell.dataset.ppd);
+  const tlW = parseFloat(cell.dataset.tlw);
+
+  const rect = bar.getBoundingClientRect();
+  const startX = point.clientX;
+  const initialLeft = parseFloat(bar.style.left) || 0;
+  const initialWidth = parseFloat(bar.style.width) || rect.width;
+
+  dragCtx = {
+    taskId, mode, ppd, tlW, bar, cell, task,
+    startX, initialLeft, initialWidth,
+    moved: false,
+    origStart: task.start, origEnd: task.end,
+    newStart: task.start, newEnd: task.end
+  };
+
+  bar.classList.add('dragging');
+
+  if (isTouch) {
+    document.addEventListener('touchmove', onBarMouseMove, { passive:false });
+    document.addEventListener('touchend', onBarMouseUp);
+    document.addEventListener('touchcancel', onBarMouseUp);
+  } else {
+    document.addEventListener('mousemove', onBarMouseMove);
+    document.addEventListener('mouseup', onBarMouseUp);
+  }
+}
+
+function onBarMouseMove(e) {
+  if (!dragCtx) return;
+  const isTouch = e.type === 'touchmove';
+  const point = isTouch ? e.touches[0] : e;
+
+  if (isTouch) e.preventDefault();
+
+  const dx = point.clientX - dragCtx.startX;
+  if (Math.abs(dx) > 2) dragCtx.moved = true;
+
+  const ppd = dragCtx.ppd;
+  // dia mínimo é 1 (barra com 1 dia)
+  const minWidth = Math.max(3, ppd);
+  let newLeft = dragCtx.initialLeft;
+  let newWidth = dragCtx.initialWidth;
+
+  if (dragCtx.mode === 'move') {
+    newLeft = dragCtx.initialLeft + dx;
+    // Limites: não passa do início (0) nem do fim (tlW)
+    newLeft = Math.max(0, Math.min(dragCtx.tlW - newWidth, newLeft));
+  } else if (dragCtx.mode === 'resize-left') {
+    // arrasta borda esquerda: muda left e width inversamente
+    let proposedLeft = dragCtx.initialLeft + dx;
+    proposedLeft = Math.max(0, Math.min(dragCtx.initialLeft + dragCtx.initialWidth - minWidth, proposedLeft));
+    newWidth = dragCtx.initialWidth + (dragCtx.initialLeft - proposedLeft);
+    newLeft = proposedLeft;
+  } else if (dragCtx.mode === 'resize-right') {
+    newWidth = dragCtx.initialWidth + dx;
+    newWidth = Math.max(minWidth, Math.min(dragCtx.tlW - dragCtx.initialLeft, newWidth));
+  }
+
+  dragCtx.bar.style.left = newLeft + 'px';
+  dragCtx.bar.style.width = newWidth + 'px';
+
+  // Snap em dias inteiros pra calcular novas datas
+  const startDay = Math.round(newLeft / ppd);
+  const endDay   = Math.round((newLeft + newWidth) / ppd) - 1;  // inclusivo
+
+  const newStart = isoFromDayOff(Math.max(0, startDay));
+  const newEnd   = isoFromDayOff(Math.max(startDay, endDay));
+
+  dragCtx.newStart = newStart;
+  dragCtx.newEnd   = newEnd;
+
+  // Atualiza colunas de "Dias" e "Entrega" em tempo real
+  updateRowVisualLive(dragCtx.taskId, newStart, newEnd);
+
+  // Tooltip
+  const days = Math.max(1, daysBetween(newStart, newEnd));
+  const label = dragCtx.mode === 'move' ? 'Movendo atividade' : 'Redimensionando';
+  showDragTooltip(point.clientX, point.clientY, label,
+    `<strong>${fmtDateBr(newStart)}</strong> → <strong>${fmtDateBr(newEnd)}</strong><br>${days} dia${days===1?'':'s'}`
+  );
+}
+
+function onBarMouseUp(e) {
+  if (!dragCtx) return;
+  const ctx = dragCtx;
+  dragCtx = null;
+
+  document.removeEventListener('mousemove', onBarMouseMove);
+  document.removeEventListener('mouseup', onBarMouseUp);
+  document.removeEventListener('touchmove', onBarMouseMove);
+  document.removeEventListener('touchend', onBarMouseUp);
+  document.removeEventListener('touchcancel', onBarMouseUp);
+
+  ctx.bar.classList.remove('dragging');
+  hideDragTooltip();
+
+  if (!ctx.moved) return;
+
+  const datesChanged = ctx.newStart !== ctx.origStart || ctx.newEnd !== ctx.origEnd;
+  if (!datesChanged) return;
+
+  // Atualiza estado local (visual)
+  const task = TASKS_DEF.find(t => t.id === ctx.taskId);
+  if (task) {
+    task.start = ctx.newStart;
+    task.end = ctx.newEnd;
+    task.days = daysBetween(ctx.newStart, ctx.newEnd);
+  }
+
+  // Adiciona ao buffer de mudanças pendentes (NÃO salva ainda)
+  addPendingChange(ctx.taskId, ctx.origStart, ctx.origEnd, ctx.newStart, ctx.newEnd);
+
+  // Re-renderiza
+  render();
+}
+
+/* ═══════════════════════════════════════════
+   BUFFER DE MUDANÇAS PENDENTES (admin)
+═══════════════════════════════════════════ */
+// Mapa: taskId → { origStart, origEnd, newStart, newEnd } (mantém o ORIGINAL antes de qualquer mudança nessa sessão)
+const pendingChanges = new Map();
+// Pilha de undo: cada entry é { taskId, beforeStart, beforeEnd, afterStart, afterEnd }
+const undoStack = [];
+
+function addPendingChange(taskId, beforeStart, beforeEnd, afterStart, afterEnd) {
+  // Se já tinha pending pra esse task, mantém origStart/origEnd originais e atualiza só o "new"
+  const existing = pendingChanges.get(taskId);
+  const origStart = existing ? existing.origStart : beforeStart;
+  const origEnd   = existing ? existing.origEnd   : beforeEnd;
+
+  // Se voltou ao original, remove a entry (sem mudança líquida)
+  if (afterStart === origStart && afterEnd === origEnd) {
+    pendingChanges.delete(taskId);
+  } else {
+    pendingChanges.set(taskId, { origStart, origEnd, newStart:afterStart, newEnd:afterEnd });
+  }
+
+  // Pilha de undo registra cada step individual
+  undoStack.push({ taskId, beforeStart, beforeEnd, afterStart, afterEnd });
+
+  updatePendingBar();
+}
+
+function updatePendingBar() {
+  const bar = document.getElementById('pending-bar');
+  if (!bar) return;
+  const n = pendingChanges.size;
+  if (n === 0) {
+    bar.classList.remove('show', 'saving');
+    return;
+  }
+  bar.classList.add('show');
+  bar.classList.remove('saving');
+  document.getElementById('pending-icon').textContent = '!';
+  document.getElementById('pending-title').textContent =
+    `${n} alteraç${n===1?'ão':'ões'} de cronograma não salva${n===1?'':'s'}`;
+  // Lista os primeiros tasks alterados
+  const ids = [...pendingChanges.keys()].slice(0, 3);
+  const names = ids.map(id => {
+    const t = TASKS_DEF.find(x => x.id === id);
+    return t ? t.name : id;
+  });
+  let sub = names.join(' · ');
+  if (n > 3) sub += ` · e mais ${n-3}`;
+  document.getElementById('pending-sub').textContent = sub;
+
+  // Reseta estado do botão Salvar (BUGFIX: depois de um save bem-sucedido, se o usuário
+  // arrastasse outra barra, o botão ficava preso em "Salvando…" porque updatePendingBar
+  // só reabilitava o botão no catch de erro, nunca quando a barra reaparecia)
+  const btnSave = document.getElementById('btn-save-pending');
+  const btnSaveLbl = document.getElementById('btn-save-pending-label');
+  if (btnSave) btnSave.disabled = false;
+  if (btnSaveLbl) btnSaveLbl.textContent = 'Salvar alterações';
+
+  // Botão Undo só ativo se tem stack
+  document.getElementById('btn-undo').disabled = undoStack.length === 0;
+}
+
+function undoLastChange() {
+  if (undoStack.length === 0) return;
+  const last = undoStack.pop();
+  // Reverte a alteração no TASKS_DEF
+  const task = TASKS_DEF.find(t => t.id === last.taskId);
+  if (task) {
+    task.start = last.beforeStart;
+    task.end = last.beforeEnd;
+    task.days = daysBetween(last.beforeStart, last.beforeEnd);
+  }
+  // Atualiza pending: se voltou ao original, remove; senão mantém com o novo "after"
+  const existing = pendingChanges.get(last.taskId);
+  if (existing) {
+    if (last.beforeStart === existing.origStart && last.beforeEnd === existing.origEnd) {
+      pendingChanges.delete(last.taskId);
+    } else {
+      pendingChanges.set(last.taskId, { ...existing, newStart:last.beforeStart, newEnd:last.beforeEnd });
+    }
+  }
+  updatePendingBar();
+  render();
+  toast({title:'Alteração desfeita', kind:'info', duration:1800});
+}
+window.undoLastChange = undoLastChange;
+
+function discardAllChanges() {
+  if (pendingChanges.size === 0) return;
+  if (!confirm(`Descartar ${pendingChanges.size} alteraç${pendingChanges.size===1?'ão':'ões'} pendente${pendingChanges.size===1?'':'s'} no cronograma?`)) return;
+  // Restaura cada task ao estado original
+  pendingChanges.forEach((ch, taskId) => {
+    const task = TASKS_DEF.find(t => t.id === taskId);
+    if (task) {
+      task.start = ch.origStart;
+      task.end   = ch.origEnd;
+      task.days  = daysBetween(ch.origStart, ch.origEnd);
+    }
+  });
+  pendingChanges.clear();
+  undoStack.length = 0;
+  updatePendingBar();
+  render();
+  toast({title:'Alterações descartadas', kind:'info'});
+}
+window.discardAllChanges = discardAllChanges;
+
+async function saveAllPendingChanges() {
+  if (pendingChanges.size === 0) return;
+  if (!IS_ADMIN || !fbSync) return;
+
+  const bar = document.getElementById('pending-bar');
+  const btnSave = document.getElementById('btn-save-pending');
+  const btnSaveLbl = document.getElementById('btn-save-pending-label');
+  bar.classList.add('saving');
+  document.getElementById('pending-icon').textContent = '⟳';
+  document.getElementById('pending-title').textContent = 'Salvando alterações…';
+  btnSave.disabled = true;
+  btnSaveLbl.textContent = 'Salvando…';
+  showSaving();
+
+  try {
+    const updates = {};
+    pendingChanges.forEach((ch, taskId) => {
+      const days = daysBetween(ch.newStart, ch.newEnd);
+      updates[`tasks/${OBRA_ID}/definition/${taskId}/start`] = ch.newStart;
+      updates[`tasks/${OBRA_ID}/definition/${taskId}/end`]   = ch.newEnd;
+      updates[`tasks/${OBRA_ID}/definition/${taskId}/days`]  = days;
+    });
+    updates[`tasks/${OBRA_ID}/updatedAt`] = Date.now();
+    updates[`meta/${OBRA_ID}/lastUpdate`] = Date.now();
+    await fbSync.update(fbSync.ref(fbSync.db), updates);
+
+    const n = pendingChanges.size;
+    pendingChanges.clear();
+    undoStack.length = 0;
+    updatePendingBar();
+    showOnlineSaved();
+    toast({title:`${n} alteraç${n===1?'ão salva':'ões salvas'} ✓`, kind:'success'});
+  } catch(e) {
+    console.error('[saveAllPending]', e);
+    showError('Erro ao salvar');
+    btnSave.disabled = false;
+    btnSaveLbl.textContent = 'Salvar alterações';
+    bar.classList.remove('saving');
+    document.getElementById('pending-icon').textContent = '!';
+    document.getElementById('pending-title').textContent = 'Falha ao salvar — tente novamente';
+    toast({
+      title:'Erro ao salvar',
+      msg: e.code === 'PERMISSION_DENIED' ? 'Permissão negada. Veja o passo a passo de regras do Firebase.' : e.message,
+      kind:'err',
+      duration: 7000,
+    });
+  }
+}
+window.saveAllPendingChanges = saveAllPendingChanges;
+
+/* Avisa antes de fechar a página com alterações pendentes */
+window.addEventListener('beforeunload', (e) => {
+  if (pendingChanges.size > 0) {
+    e.preventDefault();
+    e.returnValue = 'Você tem alterações de cronograma não salvas. Deseja sair mesmo assim?';
+    return e.returnValue;
+  }
+});
+
+/* Atalhos de teclado: Ctrl+Z (undo), Ctrl+S (save) */
+document.addEventListener('keydown', (e) => {
+  if (!IS_ADMIN) return;
+  // Não interceptar quando estiver dentro de input/textarea
+  const tag = (e.target.tagName || '').toLowerCase();
+  if (['input', 'textarea', 'select'].includes(tag)) return;
+
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z' && !e.shiftKey) {
+    if (pendingChanges.size > 0) {
+      e.preventDefault();
+      undoLastChange();
+    }
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    if (pendingChanges.size > 0) {
+      e.preventDefault();
+      saveAllPendingChanges();
+    }
+  }
+});
+
+function updateRowVisualLive(taskId, newStart, newEnd) {
+  const row = document.querySelector(`tr.task-row[data-task-id="${taskId}"]`);
+  if (!row) return;
+  // Atualiza coluna dias
+  const days = Math.max(1, daysBetween(newStart, newEnd));
+  const dval = row.querySelector('.dval');
+  if (dval) dval.textContent = days;
+  // Atualiza coluna datas
+  const dstart = row.querySelector('.dstart');
+  const dend   = row.querySelector('.dend');
+  if (dstart) dstart.textContent = fmtDate(newStart);
+  if (dend)   dend.textContent = fmtDate(newEnd);
+  // Atualiza prazo restante (se admin)
+  const tdRem = row.querySelector('.td-remaining');
+  if (tdRem) {
+    const t = TASKS_DEF.find(x => x.id === taskId);
+    if (t) {
+      const tempTask = { ...t, start:newStart, end:newEnd };
+      tdRem.innerHTML = fmtRemaining(computeRemaining(tempTask, getStatus(taskId)));
+    }
+  }
+}
+
+async function saveTaskDates(taskId, newStart, newEnd, newDays) {
+  if (!IS_ADMIN || !fbSync) return;
+  showSaving();
+  try {
+    const updates = {};
+    updates[`tasks/${OBRA_ID}/definition/${taskId}/start`] = newStart;
+    updates[`tasks/${OBRA_ID}/definition/${taskId}/end`]   = newEnd;
+    updates[`tasks/${OBRA_ID}/definition/${taskId}/days`]  = newDays;
+    updates[`tasks/${OBRA_ID}/updatedAt`] = Date.now();
+    updates[`meta/${OBRA_ID}/lastUpdate`] = Date.now();
+    await fbSync.update(fbSync.ref(fbSync.db), updates);
+    showOnlineSaved();
+    toast({title:'Datas atualizadas', msg:`${fmtDateBr(newStart)} → ${fmtDateBr(newEnd)}`, kind:'success', duration:2600});
+  } catch(e) {
+    console.error('[saveTaskDates]', e);
+    showError('Erro ao salvar datas');
+    toast({title:'Erro ao salvar', msg:e.message, kind:'err'});
+  }
+}
+
+function daysBetween(startIso, endIso) {
+  if (!startIso || !endIso) return 1;
+  const a = parseDate(startIso), b = parseDate(endIso);
+  return Math.max(1, Math.round((b - a) / 86400000) + 1);
+}
+
+/* ═══════════════════════════════════════════
+   INTERACTIONS
+═══════════════════════════════════════════ */
+function handleStatusChange(id) {
+  if (!IS_ADMIN) return; // cliente é read-only
+  const task = TASKS_DEF.find(t => t.id === id);
+  if (!task) return;
+  const {prev, next} = cycleStatus(id);
+  if (next === 'done' && prev !== 'done') {
+    justDoneIds.add(id);
+    fireNotification(task, 'local');
+    toast({title: 'Atividade concluída ✓', msg: task.name, kind: 'success'});
+  }
+  render();
+}
+function onRowClick(e, id) {
+  if (!IS_ADMIN) return;
+  // Se o clique foi em uma barra (ou em um handle), não trocamos status — o sistema de drag cuida disso
+  if (e && e.target && (e.target.closest('[data-bar]') || e.target.classList.contains('resize-handle'))) {
+    return;
+  }
+  handleStatusChange(id);
+}
+function onStatusClick(e, id) { if (!IS_ADMIN) return; e.stopPropagation(); handleStatusChange(id); }
+
+/* ═══════════════════════════════════════════
+   FINANCEIRO — abas, potes (% metas), serviços, lançamentos, medições
+═══════════════════════════════════════════ */
+let potes = {};        // { poteId: { name, percentMeta, cor, icon, desc, order } }
+let lancamentos = {};  // { lancId: { poteId, desc, valor, data, tipo, categoria, formaPagto, obs, createdAt } }
+let services = {};     // { taskId: { cobrado, realizado, updatedAt } }
+let editingPoteId = null;
+let editingLancId = null;
+let currentMainTab = 'cronograma';
+let currentFinSub = 'servicos';
+
+/* --- abas principais --- */
+function switchMainTab(name) {
+  currentMainTab = name;
+  document.querySelectorAll('.main-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.tab-content').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+  if (name === 'financeiro') {
+    renderFinanceiro();
+  } else if (name === 'cronograma') {
+    setTimeout(render, 30); // re-render Gantt pra recalcular largura
+  }
+  // Atualiza footer-rev pra refletir a aba
+  const fr = document.getElementById('footer-rev');
+  if (fr) fr.textContent = name === 'financeiro' ? 'Planejamento Financeiro' : 'Cronograma de Obra';
+}
+window.switchMainTab = switchMainTab;
+
+/* --- sub-abas financeiras --- */
+function switchFinSub(name) {
+  // Defesa: aba Lançamentos e Relatórios são exclusivas do admin.
+  // Se um cliente tentar acessar (via algum link ou erro), redirecionamos para Serviços.
+  if (!IS_ADMIN && (name === 'lancamentos' || name === 'relatorios')) {
+    name = 'servicos';
+  }
+  currentFinSub = name;
+  document.querySelectorAll('.fin-subtab').forEach(t => t.classList.toggle('active', t.dataset.sub === name));
+  document.querySelectorAll('.fin-pane').forEach(p => p.classList.toggle('active', p.id === 'fin-pane-' + name));
+  document.getElementById('btn-new-pote').style.display = (name === 'potes' && IS_ADMIN) ? '' : 'none';
+  document.getElementById('btn-new-lanc').style.display = (name === 'lancamentos' && IS_ADMIN) ? '' : 'none';
+  if (name === 'servicos')    renderServicos();
+  if (name === 'potes')       renderPotes();
+  if (name === 'lancamentos') renderLancamentos();
+  if (name === 'medicoes')    renderMedicoes();
+  if (name === 'relatorios')  renderRelatorios();
+}
+window.switchFinSub = switchFinSub;
+
+/* --- subscriptions --- */
+function subscribeFinancials() {
+  fbSync.onValue(fbSync.ref(fbSync.db, `financials/${OBRA_ID}/potes`), snap => {
+    potes = snap.val() || {};
+    // Migração silenciosa de potes antigos com `planejado` (R$) → `percentMeta` (%).
+    // Roda só uma vez (idempotente: depois que percentMeta existe, ignora).
+    maybeMigrateOldPotes();
+    if (currentMainTab === 'financeiro') renderFinanceiro();
+    updateFinTabPill();
+  }, err => {
+    console.warn('[potes]', err);
+  });
+
+  fbSync.onValue(fbSync.ref(fbSync.db, `financials/${OBRA_ID}/lancamentos`), snap => {
+    lancamentos = snap.val() || {};
+    if (currentMainTab === 'financeiro') renderFinanceiro();
+    updateFinTabPill();
+  }, err => {
+    console.warn('[lancamentos]', err);
+  });
+
+  fbSync.onValue(fbSync.ref(fbSync.db, `services/${OBRA_ID}`), snap => {
+    services = snap.val() || {};
+    if (currentMainTab === 'financeiro') renderFinanceiro();
+  }, err => {
+    console.warn('[services]', err);
+  });
+}
+
+/* --- migração one-shot: potes antigos com R$ → % do orçamento existente --- */
+let migrationPotesRunning = false;
+async function maybeMigrateOldPotes() {
+  if (!IS_ADMIN || !fbSync || migrationPotesRunning) return;
+  // Detecta potes com `planejado` (R$) mas sem `percentMeta`. Se nenhum, nada a fazer.
+  const oldOnes = Object.entries(potes).filter(([_, p]) => (
+    p && p.percentMeta == null && (Number(p.planejado) > 0)
+  ));
+  if (oldOnes.length === 0) return;
+
+  migrationPotesRunning = true;
+  try {
+    const totalOld = oldOnes.reduce((s, [_, p]) => s + (Number(p.planejado) || 0), 0);
+    if (totalOld <= 0) { migrationPotesRunning = false; return; }
+    const updates = {};
+    oldOnes.forEach(([id, p]) => {
+      const pct = Math.round(((Number(p.planejado) || 0) / totalOld) * 1000) / 10; // 1 casa
+      updates[`financials/${OBRA_ID}/potes/${id}/percentMeta`] = pct;
+      // remove o campo planejado pra não manter dado obsoleto
+      updates[`financials/${OBRA_ID}/potes/${id}/planejado`] = null;
+    });
+    await fbSync.update(fbSync.ref(fbSync.db), updates);
+    console.log('[migration potes] convertidos:', oldOnes.length, '— total antigo R$', totalOld);
+    toast({title:'Potes convertidos para meta de %', msg:'Os valores antigos em R$ foram redistribuídos como percentuais. Você pode ajustar nos potes.', kind:'info', duration:7000});
+  } catch(e) {
+    console.warn('[migration potes] falhou:', e);
+  } finally {
+    migrationPotesRunning = false;
+  }
+}
+
+function updateFinTabPill() {
+  const pill = document.getElementById('fin-tab-pill');
+  const n = Object.keys(potes).length;
+  if (pill) {
+    if (n > 0) { pill.style.display = ''; pill.textContent = n; }
+    else pill.style.display = 'none';
+  }
+}
+
+/* --- helpers de moeda e cálculo --- */
+function fmtBRL(n) {
+  return (n || 0).toLocaleString('pt-BR', { style:'currency', currency:'BRL', minimumFractionDigits:2 });
+}
+function fmtPct(n) {
+  return (n || 0).toLocaleString('pt-BR', { minimumFractionDigits:0, maximumFractionDigits:1 }) + '%';
+}
+
+// Orçamento total da obra = soma do "cobrado" de todos os serviços
+function getOrcamentoTotal() {
+  let total = 0;
+  Object.values(services).forEach(s => { total += Number(s.cobrado) || 0; });
+  return total;
+}
+// Soma das metas (%) dos potes — deveria ser 100%
+function getSumPercentMetas() {
+  let s = 0;
+  Object.values(potes).forEach(p => { s += Number(p.percentMeta) || 0; });
+  return s;
+}
+
+/* --- compute: gasto e previsto por pote (mantido como estava) --- */
+function computePoteSpend(poteId) {
+  let gasto = 0, previsto = 0;
+  Object.values(lancamentos).forEach(l => {
+    if (l.poteId !== poteId) return;
+    if (l.tipo === 'previsto') previsto += Number(l.valor) || 0;
+    else gasto += Number(l.valor) || 0;
+  });
+  return { gasto, previsto, total: gasto + previsto };
+}
+
+// Disponível em R$ de um pote = (% / 100) × orçamento total
+function computePoteAvailable(pote) {
+  const orcamento = getOrcamentoTotal();
+  const pct = Number(pote.percentMeta) || 0;
+  return (pct / 100) * orcamento;
+}
+
+/* --- renders --- */
+function renderFinanceiro() {
+  renderFinSummary();
+  if (currentFinSub === 'servicos')    renderServicos();
+  else if (currentFinSub === 'potes')       renderPotes();
+  else if (currentFinSub === 'lancamentos') renderLancamentos();
+  else if (currentFinSub === 'medicoes')    renderMedicoes();
+}
+
+function renderFinSummary() {
+  const cont = document.getElementById('fin-summary');
+  if (!cont) return;
+  const potesArr = Object.values(potes);
+  const servicesArr = Object.values(services);
+  if (!potesArr.length && !servicesArr.length) {
+    cont.innerHTML = '';
+    return;
+  }
+
+  // Orçamento total = soma do "cobrado" dos serviços
+  const orcamento = getOrcamentoTotal();
+  // Realizado dos serviços (o que foi efetivamente faturado pelo cliente)
+  let totalRealizadoServ = 0;
+  servicesArr.forEach(s => { totalRealizadoServ += Number(s.realizado) || 0; });
+
+  // Custos lançados (gasto + previsto = saída de caixa real ou comprometida)
+  let totalGasto = 0, totalPrev = 0;
+  Object.values(lancamentos).forEach(l => {
+    if (l.tipo === 'previsto') totalPrev += Number(l.valor) || 0;
+    else totalGasto += Number(l.valor) || 0;
+  });
+
+  const margem = totalRealizadoServ - (totalGasto + totalPrev);
+  const usadoPct = orcamento > 0 ? Math.round(((totalGasto + totalPrev) / orcamento) * 100) : 0;
+
+  if (IS_ADMIN) {
+    // Construtora: visão completa com margem e custos
+    cont.innerHTML = `
+      <div class="fin-stat">
+        <div class="fin-stat-lbl">Orçamento da obra</div>
+        <div class="fin-stat-val">${fmtBRL(orcamento)}</div>
+        <div class="fin-stat-sub">soma do cobrado dos serviços</div>
+      </div>
+      <div class="fin-stat">
+        <div class="fin-stat-lbl">Faturado ao cliente</div>
+        <div class="fin-stat-val">${fmtBRL(totalRealizadoServ)}</div>
+        <div class="fin-stat-sub">${orcamento > 0 ? Math.round(totalRealizadoServ/orcamento*100) : 0}% do orçamento</div>
+      </div>
+      <div class="fin-stat">
+        <div class="fin-stat-lbl">Custos (gasto + previsto)</div>
+        <div class="fin-stat-val">${fmtBRL(totalGasto + totalPrev)}</div>
+        <div class="fin-stat-sub">${usadoPct}% do orçamento</div>
+      </div>
+      <div class="fin-stat">
+        <div class="fin-stat-lbl">Margem (realizado − custos)</div>
+        <div class="fin-stat-val ${margem >= 0 ? 'pos' : 'neg'}">${fmtBRL(margem)}</div>
+        <div class="fin-stat-sub">${margem < 0 ? 'no vermelho' : 'sobra atual'}</div>
+      </div>
+    `;
+  } else {
+    // Cliente: NÃO vê custos internos nem margem/lucro. Vê só:
+    //  - Orçamento total contratado
+    //  - Quanto já foi entregue (medido) — calculado pelo avanço físico × valor cobrado
+    //  - % de avanço financeiro
+    //  - Saldo a entregar
+    let totalMedido = 0;
+    if (TASKS_DEF) {
+      TASKS_DEF.forEach(t => {
+        const s = services[t.id] || {};
+        const cobrado = Number(s.cobrado) || 0;
+        const status = state ? state[t.id] : null;
+        let pctAv = 0;
+        if (status === 'done') pctAv = 1;
+        else if (status === 'progress') pctAv = 0.5;
+        totalMedido += cobrado * pctAv;
+      });
+    }
+    const saldoEntregar = orcamento - totalMedido;
+    const pctAvFin = orcamento > 0 ? Math.round((totalMedido / orcamento) * 100) : 0;
+
+    cont.innerHTML = `
+      <div class="fin-stat">
+        <div class="fin-stat-lbl">Orçamento contratado</div>
+        <div class="fin-stat-val">${fmtBRL(orcamento)}</div>
+        <div class="fin-stat-sub">valor total da obra</div>
+      </div>
+      <div class="fin-stat">
+        <div class="fin-stat-lbl">Entregue até agora</div>
+        <div class="fin-stat-val pos">${fmtBRL(totalMedido)}</div>
+        <div class="fin-stat-sub">${pctAvFin}% do contratado</div>
+      </div>
+      <div class="fin-stat">
+        <div class="fin-stat-lbl">Saldo a entregar</div>
+        <div class="fin-stat-val">${fmtBRL(Math.max(0, saldoEntregar))}</div>
+        <div class="fin-stat-sub">previsão restante</div>
+      </div>
+    `;
+  }
+}
+
+/* Detecta se o pote representa "Lucro" — usado para esconder do cliente.
+   Olha pro nome (case-insensitive) ou pelo ícone padrão de lucro. */
+function isPoteLucro(p) {
+  const n = (p.name || '').toLowerCase().trim();
+  if (n === 'lucro' || n.startsWith('lucro ') || n.includes(' lucro')) return true;
+  if (n === 'margem' || n.startsWith('margem ')) return true;
+  // ícone padrão de lucro
+  if (p.icon === '💰') return true;
+  return false;
+}
+
+function renderPotes() {
+  const grid = document.getElementById('potes-grid');
+  const empty = document.getElementById('potes-empty');
+  const summaryBar = document.getElementById('potes-summary-bar');
+
+  // Construtora vê todos os potes; cliente NÃO vê o pote de Lucro.
+  const fullList = Object.entries(potes)
+    .map(([id, p]) => ({ ...p, id }))
+    .sort((a,b) => (a.order ?? 999) - (b.order ?? 999) || (a.name||'').localeCompare(b.name||''));
+  const list = IS_ADMIN ? fullList : fullList.filter(p => !isPoteLucro(p));
+
+  if (!list.length) {
+    grid.innerHTML = '';
+    if (summaryBar) summaryBar.style.display = 'none';
+    empty.style.display = '';
+    // Mostra "Criar 4 potes padrão" só pra admin quando NÃO há nenhum pote
+    const btnPadrao = document.getElementById('btn-criar-potes-padrao');
+    if (btnPadrao) {
+      // O botão tem class admin-only — o display é tratado via CSS,
+      // mas é seguro forçar inline-flex pra construtora.
+      btnPadrao.style.display = IS_ADMIN ? 'inline-flex' : 'none';
+    }
+    return;
+  }
+  empty.style.display = 'none';
+
+  // ── Barra de soma das metas (verifica se fecha em 100%) — só admin
+  const sumPct = getSumPercentMetas(); // sempre considera todos os potes (inclui lucro)
+  const orcamento = getOrcamentoTotal();
+  if (summaryBar) {
+    if (!IS_ADMIN) {
+      summaryBar.style.display = 'none';
+    } else {
+      let cls = 'ok';
+      let msg = 'A soma das metas fecha em 100% — perfeito.';
+      if (Math.abs(sumPct - 100) > 0.5) {
+        if (sumPct > 100.5) {
+          cls = 'over';
+          msg = `As metas somam ${fmtPct(sumPct)} — passou de 100%. Ajuste pra fechar em 100%.`;
+        } else {
+          cls = 'warn';
+          msg = `As metas somam ${fmtPct(sumPct)} — falta ${fmtPct(100 - sumPct)} pra fechar em 100%.`;
+        }
+      }
+      const fillW = Math.min(100, Math.max(0, sumPct));
+      summaryBar.className = 'potes-summary-bar ' + cls;
+      summaryBar.style.display = '';
+      summaryBar.innerHTML = `
+        <div>
+          <div class="potes-sum-label">Soma das metas</div>
+          <div class="potes-sum-value">${fmtPct(sumPct)}</div>
+        </div>
+        <div class="potes-sum-track"><div class="potes-sum-track-fill" style="width:${fillW}%"></div></div>
+        <div class="potes-sum-msg">${msg}${orcamento > 0 ? ` Orçamento base: <strong>${fmtBRL(orcamento)}</strong>.` : ' <em>Preencha o cobrado dos serviços para ativar o cálculo em R$ por pote.</em>'}</div>
+      `;
+    }
+  }
+
+  let html = '';
+  list.forEach(p => {
+    const { gasto, previsto, total } = computePoteSpend(p.id);
+    const disponivelTotal = computePoteAvailable(p); // R$ alocados a esse pote pelo % do orçamento
+    const percentMeta = Number(p.percentMeta) || 0;
+    const realPct = disponivelTotal > 0 ? Math.round((total / disponivelTotal) * 100) : 0;
+    const pct = Math.min(100, realPct);
+    const disp = disponivelTotal - total;
+    const cor = p.cor || '#1A7A9A';
+    const corLight = cor + '22';
+    const fillCls = realPct >= 100 ? 'over' : realPct >= 85 ? 'warn' : '';
+    const pctCls  = realPct >= 100 ? 'over' : realPct >= 85 ? 'warn' : '';
+
+    const subline = orcamento > 0
+      ? `${fmtPct(percentMeta)} do orçamento · ${fmtBRL(disponivelTotal)}`
+      : `${fmtPct(percentMeta)} (R$ a calcular)`;
+
+    if (IS_ADMIN) {
+      // Admin: vê gasto, previsto, disponível e % utilizado (visão completa interna)
+      html += `
+        <div class="pote-card" style="--pote-color:${cor};--pote-color-light:${corLight}" onclick="openPoteModal('${p.id}')">
+          <div class="pote-hdr">
+            <div class="pote-icon">${p.icon || '🏺'}</div>
+            <div style="flex:1;min-width:0">
+              <div class="pote-name">${escapeHtml(p.name||'—')}</div>
+              <div class="pote-name-sub">${subline}</div>
+            </div>
+          </div>
+          <div class="pote-vals">
+            <div class="pote-val-grp">
+              <span class="pote-val-lbl">Gasto</span>
+              <span class="pote-val gasto">${fmtBRL(gasto)}</span>
+            </div>
+            ${previsto ? `<div class="pote-val-grp">
+              <span class="pote-val-lbl">Previsto</span>
+              <span class="pote-val" style="color:${cor}">${fmtBRL(previsto)}</span>
+            </div>` : ''}
+            <div class="pote-val-grp" style="text-align:right">
+              <span class="pote-val-lbl">${disp >= 0 ? 'Disponível' : 'Excedente'}</span>
+              <span class="pote-val disp ${disp < 0 ? 'neg' : ''}">${fmtBRL(Math.abs(disp))}</span>
+            </div>
+          </div>
+          <div class="pote-bar-track"><div class="pote-bar-fill ${fillCls}" style="width:${pct}%"></div></div>
+          <div class="pote-foot">
+            <span>${realPct}% utilizado</span>
+            <span class="pct ${pctCls}">${realPct >= 100 ? '⚠ pote estourado' : (realPct >= 85 ? '⚠ atenção' : 'no plano')}</span>
+          </div>
+          ${p.desc ? `<div class="pote-desc">${escapeHtml(p.desc)}</div>` : ''}
+        </div>
+      `;
+    } else {
+      // Cliente: NÃO vê gasto real nem disponível interno. Vê só:
+      //  - O nome e a meta planejada (% do orçamento + R$ alocado)
+      //  - Quanto desse pote já foi "entregue" (avanço físico × R$ planejado)
+      //  - Não vê "previsto" (compromissos internos), nem disp/excedente, nem alerta de estouro
+      const entreguePote = computePoteEntregue(p.id);
+      const pctEntregue = disponivelTotal > 0 ? Math.round((entreguePote / disponivelTotal) * 100) : 0;
+      const pctEntreguePct = Math.min(100, pctEntregue);
+      html += `
+        <div class="pote-card" style="--pote-color:${cor};--pote-color-light:${corLight};cursor:default">
+          <div class="pote-hdr">
+            <div class="pote-icon">${p.icon || '🏺'}</div>
+            <div style="flex:1;min-width:0">
+              <div class="pote-name">${escapeHtml(p.name||'—')}</div>
+              <div class="pote-name-sub">${subline}</div>
+            </div>
+          </div>
+          <div class="pote-vals">
+            <div class="pote-val-grp">
+              <span class="pote-val-lbl">Entregue até agora</span>
+              <span class="pote-val gasto">${fmtBRL(entreguePote)}</span>
+            </div>
+            <div class="pote-val-grp" style="text-align:right">
+              <span class="pote-val-lbl">% concluído</span>
+              <span class="pote-val">${pctEntregue}%</span>
+            </div>
+          </div>
+          <div class="pote-bar-track"><div class="pote-bar-fill" style="width:${pctEntreguePct}%;background:${cor}"></div></div>
+          ${p.desc ? `<div class="pote-desc">${escapeHtml(p.desc)}</div>` : ''}
+        </div>
+      `;
+    }
+  });
+  grid.innerHTML = html;
+}
+
+/* "Entregue" no pote = quanto foi medido (avanço físico × R$ planejado) das
+   atividades que se referem a esse pote. Como atividades não têm pote
+   atribuído, distribuímos proporcionalmente ao % do pote no orçamento.
+   Isso dá ao cliente uma visão de "quanto desse compromisso a obra já
+   entregou" sem expor gasto real nem lucro. */
+function computePoteEntregue(poteId) {
+  const p = potes[poteId]; if (!p) return 0;
+  const pct = Number(p.percentMeta) || 0;
+  if (pct <= 0) return 0;
+  // Total medido = soma de (avanço da atividade × valor cobrado)
+  let totalMedido = 0;
+  if (typeof TASKS_DEF !== 'undefined' && TASKS_DEF) {
+    TASKS_DEF.forEach(t => {
+      const s = services[t.id] || {};
+      const cobrado = Number(s.cobrado) || 0;
+      const status = (typeof state !== 'undefined' && state) ? state[t.id] : null;
+      // Heurística simples: pendente=0%, em andamento=50%, concluído=100%
+      let pctAv = 0;
+      if (status === 'done') pctAv = 1;
+      else if (status === 'progress') pctAv = 0.5;
+      totalMedido += cobrado * pctAv;
+    });
+  }
+  return totalMedido * (pct / 100);
+}
+
+/* ═══════════ SERVIÇOS (cobrado × realizado por atividade) ═══════════ */
+function renderServicos() {
+  const tbody = document.getElementById('services-body');
+  const tfoot = document.getElementById('services-foot');
+  const empty = document.getElementById('services-empty');
+  const wrap  = document.querySelector('#fin-pane-servicos .services-table-wrap');
+  const tableEl = document.getElementById('services-table');
+  if (!tbody || !tfoot) return;
+
+  if (!TASKS_DEF || TASKS_DEF.length === 0) {
+    tbody.innerHTML = '';
+    tfoot.innerHTML = '';
+    if (wrap) wrap.style.display = 'none';
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (wrap) wrap.style.display = '';
+  if (empty) empty.style.display = 'none';
+
+  // Reescreve o cabeçalho conforme perfil. Cliente vê:
+  // # | Serviço | Cobrado | Entregue | % concluído  (sem "realizado" real interno)
+  // Admin vê: # | Serviço | Cobrado | Realizado | Diferença
+  if (tableEl) {
+    const thead = tableEl.querySelector('thead');
+    if (thead) {
+      if (IS_ADMIN) {
+        thead.innerHTML = `<tr>
+          <th style="width:48px">#</th>
+          <th>Serviço</th>
+          <th class="num">Cobrado (R$)</th>
+          <th class="num">Realizado (R$)</th>
+          <th class="num">Diferença</th>
+        </tr>`;
+      } else {
+        thead.innerHTML = `<tr>
+          <th style="width:48px">#</th>
+          <th>Serviço</th>
+          <th class="num">Valor do serviço</th>
+          <th class="num">Entregue até agora</th>
+          <th class="num">% concluído</th>
+        </tr>`;
+      }
+    }
+    // Atualiza também o texto de ajuda
+    const help = document.querySelector('#fin-pane-servicos .services-help');
+    if (help) {
+      if (IS_ADMIN) {
+        help.innerHTML = `<strong>Como funciona:</strong> cada atividade do cronograma vira uma linha aqui. Preencha o <em>cobrado</em> (o que vai cobrar do cliente por aquele serviço) e o <em>realizado</em> (o que já foi efetivamente faturado). A soma do cobrado é o orçamento total da obra — base do cálculo dos potes em %.`;
+      } else {
+        help.innerHTML = `<strong>O que você vê aqui:</strong> cada atividade da obra com o valor contratado e o quanto já foi <em>entregue</em>. O entregue é calculado pelo avanço físico — atividades concluídas contam 100% do valor, em andamento contam 50%, e pendentes ainda não contam.`;
+      }
+    }
+  }
+
+  let totCobrado = 0, totRealizado = 0, totMedido = 0;
+  let html = '';
+  TASKS_DEF.forEach((t, idx) => {
+    const s = services[t.id] || {};
+    const cobrado = Number(s.cobrado) || 0;
+    const realizado = Number(s.realizado) || 0;
+    totCobrado += cobrado;
+    totRealizado += realizado;
+
+    const status = state ? state[t.id] : null;
+    let pctAv = 0;
+    if (status === 'done') pctAv = 1;
+    else if (status === 'progress') pctAv = 0.5;
+    const medido = cobrado * pctAv;
+    totMedido += medido;
+    const pctConcl = cobrado > 0 ? Math.round(pctAv * 100) : 0;
+
+    const diff = realizado - cobrado;
+    const diffCls = Math.abs(diff) < 0.005 ? 'diff-zero' : (diff >= 0 ? 'diff-pos' : 'diff-neg');
+    const diffStr = (diff >= 0 ? '+' : '−') + fmtBRL(Math.abs(diff)).replace('R$', 'R$ ').trim();
+
+    if (IS_ADMIN) {
+      html += `<tr>
+        <td style="color:var(--muted);font-size:11px">${idx + 1}</td>
+        <td>
+          <div class="services-name">${escapeHtml(t.name || '')}</div>
+          <div class="services-name-sub">${escapeHtml((t.dept||'') + (t.phase ? ' · ' + t.phase : ''))}</div>
+        </td>
+        <td class="num"><input class="services-input" data-svc-task="${t.id}" data-svc-field="cobrado" type="number" min="0" step="0.01" value="${cobrado || ''}" placeholder="0,00"></td>
+        <td class="num"><input class="services-input" data-svc-task="${t.id}" data-svc-field="realizado" type="number" min="0" step="0.01" value="${realizado || ''}" placeholder="0,00"></td>
+        <td class="num ${diffCls}">${(cobrado===0 && realizado===0) ? '<span class="services-zero">—</span>' : diffStr}</td>
+      </tr>`;
+    } else {
+      // Cliente: NÃO vê "realizado" (gasto real interno) — vê só "entregue" calculado pelo avanço
+      const pctCls = pctConcl >= 100 ? 'diff-pos' : (pctConcl > 0 ? '' : 'services-zero');
+      html += `<tr>
+        <td style="color:var(--muted);font-size:11px">${idx + 1}</td>
+        <td>
+          <div class="services-name">${escapeHtml(t.name || '')}</div>
+          <div class="services-name-sub">${escapeHtml((t.dept||'') + (t.phase ? ' · ' + t.phase : ''))}</div>
+        </td>
+        <td class="num"><span class="services-readonly ${cobrado===0?'services-zero':''}">${cobrado === 0 ? '—' : fmtBRL(cobrado)}</span></td>
+        <td class="num"><span class="services-readonly ${medido===0?'services-zero':''}">${medido === 0 ? '—' : fmtBRL(medido)}</span></td>
+        <td class="num ${pctCls}" style="font-weight:700">${cobrado === 0 ? '—' : pctConcl + '%'}</td>
+      </tr>`;
+    }
+  });
+  tbody.innerHTML = html;
+
+  if (IS_ADMIN) {
+    const totDiff = totRealizado - totCobrado;
+    const totDiffCls = Math.abs(totDiff) < 0.005 ? 'diff-zero' : (totDiff >= 0 ? 'diff-pos' : 'diff-neg');
+    tfoot.innerHTML = `<tr>
+      <td colspan="2" style="text-transform:uppercase;font-size:11px;letter-spacing:1px;color:var(--muted)">Totais da obra</td>
+      <td class="num">${fmtBRL(totCobrado)}</td>
+      <td class="num">${fmtBRL(totRealizado)}</td>
+      <td class="num ${totDiffCls}">${fmtBRL(totDiff)}</td>
+    </tr>`;
+  } else {
+    const pctTot = totCobrado > 0 ? Math.round((totMedido / totCobrado) * 100) : 0;
+    tfoot.innerHTML = `<tr>
+      <td colspan="2" style="text-transform:uppercase;font-size:11px;letter-spacing:1px;color:var(--muted)">Total da obra</td>
+      <td class="num">${fmtBRL(totCobrado)}</td>
+      <td class="num">${fmtBRL(totMedido)}</td>
+      <td class="num diff-pos" style="font-weight:700">${pctTot}%</td>
+    </tr>`;
+  }
+
+  // Liga listeners de input apenas para admin
+  if (IS_ADMIN) {
+    tbody.querySelectorAll('.services-input').forEach(inp => {
+      inp.addEventListener('blur', onServiceFieldBlur);
+      inp.addEventListener('keydown', e => {
+        if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+      });
+    });
+  }
+}
+
+// Debounce simples por (taskId, field) para evitar gravações duplicadas no blur
+const _svcInputState = new Map(); // chave "tid|field" → último valor salvo
+async function onServiceFieldBlur(e) {
+  if (!IS_ADMIN || !fbSync) return;
+  const inp = e.target;
+  const taskId = inp.getAttribute('data-svc-task');
+  const field  = inp.getAttribute('data-svc-field');
+  if (!taskId || !field) return;
+
+  const value = parseFloat((inp.value || '').toString().replace(',', '.')) || 0;
+  if (value < 0) {
+    inp.value = '';
+    toast({title:'Valor inválido', kind:'warn'});
+    return;
+  }
+  const key = taskId + '|' + field;
+  const old = _svcInputState.get(key);
+  if (old === value) return; // nada mudou
+  _svcInputState.set(key, value);
+
+  inp.classList.remove('saved');
+  inp.classList.add('saving');
+  try {
+    const updates = {};
+    updates[`services/${OBRA_ID}/${taskId}/${field}`] = value > 0 ? value : null;
+    updates[`services/${OBRA_ID}/${taskId}/updatedAt`] = Date.now();
+    updates[`meta/${OBRA_ID}/lastUpdate`] = Date.now();
+    await fbSync.update(fbSync.ref(fbSync.db), updates);
+    inp.classList.remove('saving');
+    inp.classList.add('saved');
+    setTimeout(() => inp.classList.remove('saved'), 1200);
+  } catch(err) {
+    console.error('[saveService]', err);
+    inp.classList.remove('saving');
+    toast({title:'Erro ao salvar', msg: err.code === 'PERMISSION_DENIED' ? 'Permissão negada.' : err.message, kind:'err'});
+  }
+}
+
+/* ═══════════ MEDIÇÕES (físico × financeiro) ═══════════ */
+// Avanço físico por status: pendente=0, em-andamento=50%, concluído=100%
+function physicalProgressOf(taskId) {
+  const status = (state && state[taskId]) || 'pending';
+  if (status === 'done')     return 1.0;
+  if (status === 'progress') return 0.5;
+  return 0;
+}
+
+function renderMedicoes() {
+  const tbody = document.getElementById('medicoes-body');
+  const tfoot = document.getElementById('medicoes-foot');
+  const empty = document.getElementById('medicoes-empty');
+  const wrap  = document.querySelector('#fin-pane-medicoes .services-table-wrap');
+  const tableEl = document.getElementById('medicoes-table');
+  if (!tbody || !tfoot) return;
+
+  if (!TASKS_DEF || TASKS_DEF.length === 0) {
+    tbody.innerHTML = '';
+    tfoot.innerHTML = '';
+    if (wrap) wrap.style.display = 'none';
+    if (empty) empty.style.display = '';
+    return;
+  }
+  if (wrap) wrap.style.display = '';
+  if (empty) empty.style.display = 'none';
+
+  // Cabeçalho dinâmico: cliente NÃO vê Realizado nem Saldo a faturar
+  if (tableEl) {
+    const thead = tableEl.querySelector('thead');
+    if (thead) {
+      if (IS_ADMIN) {
+        thead.innerHTML = `<tr>
+          <th>Serviço</th>
+          <th class="num">Status</th>
+          <th class="num">% físico</th>
+          <th class="num">Cobrado</th>
+          <th class="num">Medido (estimado)</th>
+          <th class="num">Realizado</th>
+          <th class="num">Saldo a faturar</th>
+        </tr>`;
+      } else {
+        thead.innerHTML = `<tr>
+          <th>Serviço</th>
+          <th class="num">Status</th>
+          <th class="num">% físico</th>
+          <th class="num">Valor</th>
+          <th class="num">Já entregue</th>
+        </tr>`;
+      }
+    }
+  }
+
+  let totCob = 0, totMed = 0, totReal = 0;
+  let html = '';
+
+  TASKS_DEF.forEach(t => {
+    const s = services[t.id] || {};
+    const cobrado = Number(s.cobrado) || 0;
+    const realizado = Number(s.realizado) || 0;
+    const phys = physicalProgressOf(t.id);
+    const medido = phys * cobrado;
+    const saldo = medido - realizado;
+    totCob += cobrado;
+    totMed += medido;
+    totReal += realizado;
+
+    const status = (state && state[t.id]) || 'pending';
+    const statusLbl = status === 'done' ? 'Concluído' : status === 'progress' ? 'Em andamento' : 'Pendente';
+    const statusCls = status === 'done' ? 'concluido' : status === 'progress' ? 'andamento' : 'pendente';
+
+    if (IS_ADMIN) {
+      const saldoCls = Math.abs(saldo) < 0.005 ? 'diff-zero' : (saldo > 0 ? 'diff-pos' : 'diff-neg');
+      html += `<tr>
+        <td>
+          <div class="services-name">${escapeHtml(t.name || '')}</div>
+          <div class="services-name-sub">${escapeHtml((t.dept||'') + (t.phase ? ' · ' + t.phase : ''))}</div>
+        </td>
+        <td class="num"><span class="status-pill ${statusCls}">${statusLbl}</span></td>
+        <td class="num">${Math.round(phys * 100)}%</td>
+        <td class="num"><span class="services-readonly ${cobrado===0?'services-zero':''}">${cobrado === 0 ? '—' : fmtBRL(cobrado)}</span></td>
+        <td class="num"><span class="services-readonly ${medido===0?'services-zero':''}">${medido === 0 ? '—' : fmtBRL(medido)}</span></td>
+        <td class="num"><span class="services-readonly ${realizado===0?'services-zero':''}">${realizado === 0 ? '—' : fmtBRL(realizado)}</span></td>
+        <td class="num ${saldoCls}">${cobrado === 0 ? '<span class="services-zero">—</span>' : fmtBRL(saldo)}</td>
+      </tr>`;
+    } else {
+      // Cliente: vê só status + % físico + valor cobrado + valor já entregue (medido)
+      html += `<tr>
+        <td>
+          <div class="services-name">${escapeHtml(t.name || '')}</div>
+          <div class="services-name-sub">${escapeHtml((t.dept||'') + (t.phase ? ' · ' + t.phase : ''))}</div>
+        </td>
+        <td class="num"><span class="status-pill ${statusCls}">${statusLbl}</span></td>
+        <td class="num">${Math.round(phys * 100)}%</td>
+        <td class="num"><span class="services-readonly ${cobrado===0?'services-zero':''}">${cobrado === 0 ? '—' : fmtBRL(cobrado)}</span></td>
+        <td class="num"><span class="services-readonly ${medido===0?'services-zero':''}">${medido === 0 ? '—' : fmtBRL(medido)}</span></td>
+      </tr>`;
+    }
+  });
+  tbody.innerHTML = html;
+
+  if (IS_ADMIN) {
+    const totSaldo = totMed - totReal;
+    const totSaldoCls = Math.abs(totSaldo) < 0.005 ? 'diff-zero' : (totSaldo > 0 ? 'diff-pos' : 'diff-neg');
+    const totPhys = totCob > 0 ? Math.round((totMed / totCob) * 100) : 0;
+    tfoot.innerHTML = `<tr>
+      <td style="text-transform:uppercase;font-size:11px;letter-spacing:1px;color:var(--muted)">Totais</td>
+      <td class="num">—</td>
+      <td class="num">${totPhys}%</td>
+      <td class="num">${fmtBRL(totCob)}</td>
+      <td class="num">${fmtBRL(totMed)}</td>
+      <td class="num">${fmtBRL(totReal)}</td>
+      <td class="num ${totSaldoCls}">${fmtBRL(totSaldo)}</td>
+    </tr>`;
+  } else {
+    const totPhys = totCob > 0 ? Math.round((totMed / totCob) * 100) : 0;
+    tfoot.innerHTML = `<tr>
+      <td style="text-transform:uppercase;font-size:11px;letter-spacing:1px;color:var(--muted)">Totais</td>
+      <td class="num">—</td>
+      <td class="num diff-pos" style="font-weight:700">${totPhys}%</td>
+      <td class="num">${fmtBRL(totCob)}</td>
+      <td class="num">${fmtBRL(totMed)}</td>
+    </tr>`;
+  }
+}
+
+function renderLancamentos() {
+  // Atualiza filtros (potes e categorias)
+  const selPote = document.getElementById('lanc-filter-pote');
+  if (selPote) {
+    const cur = selPote.value;
+    let opts = '<option value="">Todos os potes</option>';
+    Object.entries(potes).sort((a,b) => (a[1].name||'').localeCompare(b[1].name||''))
+      .forEach(([id, p]) => opts += `<option value="${id}">${escapeHtml(p.name||'')}</option>`);
+    selPote.innerHTML = opts;
+    selPote.value = cur;
+  }
+
+  // Categorias presentes em uso (extrai dos lançamentos)
+  const cats = [...new Set(Object.values(lancamentos).map(l => l.categoria).filter(Boolean))];
+  const selCat = document.getElementById('lanc-filter-cat');
+  if (selCat) {
+    const cur = selCat.value;
+    let opts = '<option value="">Todas as categorias</option>';
+    cats.sort().forEach(c => opts += `<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`);
+    selCat.innerHTML = opts;
+    selCat.value = cur;
+  }
+
+  const list = document.getElementById('lanc-list');
+  const empty = document.getElementById('lanc-empty');
+  const fPote = selPote ? selPote.value : '';
+  const fCat  = selCat ? selCat.value : '';
+  const fSearch = (document.getElementById('lanc-search')?.value || '').toLowerCase();
+
+  let arr = Object.entries(lancamentos)
+    .map(([id, l]) => ({ ...l, id }))
+    .filter(l => {
+      if (fPote && l.poteId !== fPote) return false;
+      if (fCat && l.categoria !== fCat) return false;
+      if (fSearch && !((l.desc||'').toLowerCase().includes(fSearch) || (l.obs||'').toLowerCase().includes(fSearch))) return false;
+      return true;
+    })
+    .sort((a,b) => {
+      // Mais recente primeiro
+      const da = a.data || '0000', db = b.data || '0000';
+      if (da !== db) return db.localeCompare(da);
+      return (b.createdAt || 0) - (a.createdAt || 0);
+    });
+
+  if (!arr.length) {
+    list.innerHTML = '';
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  let html = '';
+  arr.forEach(l => {
+    const p = potes[l.poteId];
+    const cor = p?.cor || '#1A7A9A';
+    const poteName = p?.name || '— pote removido —';
+    const corLight = cor + '22';
+    const cliquePote = l.id;
+    html += `
+      <div class="lanc-row" onclick="${IS_ADMIN ? `openLancamentoModal('${l.id}')` : ''}">
+        <div class="lanc-pote-tag" style="background:${corLight};color:${cor}">
+          ${p?.icon || '🏺'} ${escapeHtml(poteName)}
+        </div>
+        <div>
+          <div class="lanc-desc">${escapeHtml(l.desc||'(sem descrição)')}</div>
+          <div class="lanc-meta">
+            ${l.categoria ? `<span class="lanc-cat-tag">${escapeHtml(l.categoria)}</span>` : ''}
+            ${l.formaPagto ? `<span>${escapeHtml(l.formaPagto)}</span>` : ''}
+            ${l.obs ? `<span title="${escapeHtml(l.obs)}">📝 obs</span>` : ''}
+          </div>
+        </div>
+        <div class="lanc-data">${fmtDateBr(l.data)}</div>
+        <div>
+          <span class="lanc-tipo-pill ${l.tipo==='previsto'?'previsto':'gasto'}">${l.tipo==='previsto'?'Previsto':'Realizado'}</span>
+        </div>
+        <div class="lanc-valor ${l.tipo==='previsto'?'previsto':''}">${fmtBRL(Number(l.valor) || 0)}</div>
+      </div>
+    `;
+  });
+  list.innerHTML = html;
+}
+window.renderLancamentos = renderLancamentos;
+
+function renderRelatorios() {
+  const cont = document.getElementById('relatorios-content');
+  if (!cont) return;
+  if (!IS_ADMIN) {
+    cont.innerHTML = '<div class="empty-state"><div class="empty-icon">🔒</div><div class="empty-title">Acesso restrito</div><div class="empty-sub" style="display:block">Os relatórios financeiros são visíveis apenas para a construtora.</div></div>';
+    return;
+  }
+
+  const potesArr = Object.entries(potes)
+    .map(([id, p]) => ({ ...p, id }))
+    .sort((a,b) => (a.order ?? 999) - (b.order ?? 999));
+
+  const lancamentosArr = Object.values(lancamentos);
+  const orcamento = getOrcamentoTotal();
+
+  if (!potesArr.length && !lancamentosArr.length) {
+    cont.innerHTML = `<div class="empty-state">
+      <div class="empty-icon">📊</div>
+      <div class="empty-title">Sem dados para relatório</div>
+      <div class="empty-sub" style="display:block">Crie potes e adicione lançamentos para ver os relatórios.</div>
+    </div>`;
+    return;
+  }
+
+  // Totais gerais
+  let totalGasto = 0, totalPrev = 0;
+  lancamentosArr.forEach(l => {
+    if (l.tipo === 'previsto') totalPrev += Number(l.valor) || 0;
+    else totalGasto += Number(l.valor) || 0;
+  });
+  let totalRealizadoServ = 0;
+  Object.values(services).forEach(s => { totalRealizadoServ += Number(s.realizado) || 0; });
+  const margem = totalRealizadoServ - (totalGasto + totalPrev);
+  const margemProj = orcamento - (totalGasto + totalPrev);
+
+  // ═══════════ KPIs principais ═══════════
+  let html = `
+    <div class="rep-kpis">
+      <div class="rep-kpi">
+        <div class="rep-kpi-lbl">Gastos realizados</div>
+        <div class="rep-kpi-val">${fmtBRL(totalGasto)}</div>
+        <div class="rep-kpi-sub">${orcamento > 0 ? Math.round(totalGasto/orcamento*100) : 0}% do orçamento</div>
+      </div>
+      <div class="rep-kpi">
+        <div class="rep-kpi-lbl">Comprometido (previsto)</div>
+        <div class="rep-kpi-val" style="color:var(--orange)">${fmtBRL(totalPrev)}</div>
+        <div class="rep-kpi-sub">${orcamento > 0 ? Math.round(totalPrev/orcamento*100) : 0}% do orçamento</div>
+      </div>
+      <div class="rep-kpi">
+        <div class="rep-kpi-lbl">Margem atual</div>
+        <div class="rep-kpi-val ${margem >= 0 ? 'pos' : 'neg'}">${fmtBRL(margem)}</div>
+        <div class="rep-kpi-sub">faturado − custos</div>
+      </div>
+      <div class="rep-kpi">
+        <div class="rep-kpi-lbl">Margem projetada</div>
+        <div class="rep-kpi-val ${margemProj >= 0 ? 'pos' : 'neg'}">${fmtBRL(margemProj)}</div>
+        <div class="rep-kpi-sub">orçamento − custos lançados</div>
+      </div>
+    </div>
+  `;
+
+  // ═══════════ 1) Gasto por pote (com meta de % do orçamento) ═══════════
+  if (potesArr.length) {
+    html += '<div class="rep-section"><div class="rep-title">📦 Gasto realizado vs. meta por pote</div>';
+    const maxValor = Math.max(...potesArr.map(p => Math.max(computePoteAvailable(p), computePoteSpend(p.id).total)), 1);
+    potesArr.forEach(p => {
+      const { gasto, previsto, total } = computePoteSpend(p.id);
+      const meta = computePoteAvailable(p);
+      const usadoPct = meta > 0 ? Math.round((total / meta) * 100) : 0;
+      const fillW = Math.min(100, (total / maxValor) * 100);
+      const metaW = Math.min(100, (meta / maxValor) * 100);
+      const cls = usadoPct >= 100 ? 'over' : usadoPct >= 85 ? 'warn' : '';
+      html += `
+        <div class="rep-bar-row">
+          <div class="rep-bar-name">${p.icon||'🏺'} ${escapeHtml(p.name)}</div>
+          <div class="rep-bar-track" style="position:relative">
+            <div class="rep-bar-fill ${cls}" style="background:${p.cor||'#1A7A9A'};width:${Math.max(2, fillW)}%">${total > 0 && fillW > 18 ? fmtBRL(total) : ''}</div>
+            <div class="rep-bar-meta-line" style="left:${metaW}%" title="Meta: ${fmtBRL(meta)}"></div>
+          </div>
+          <div class="rep-bar-val">${fmtBRL(gasto)}${previsto > 0 ? ` <span style="color:var(--orange);font-size:10px">+${fmtBRL(previsto)} prev</span>` : ''}</div>
+          <div class="rep-bar-pct ${cls}">${meta > 0 ? usadoPct + '%' : '—'}</div>
+        </div>`;
+    });
+    html += '<div style="font-size:10.5px;color:var(--muted);margin-top:8px;display:flex;align-items:center;gap:8px"><span style="display:inline-block;width:14px;height:2px;background:var(--text);vertical-align:middle"></span>linha vertical = meta de R$ pelo % do pote</div>';
+    html += '</div>';
+  }
+
+  // ═══════════ 2) Pizza/anel: distribuição do gasto entre potes ═══════════
+  if (potesArr.length && totalGasto > 0) {
+    const totalGastoPotes = potesArr.reduce((s, p) => s + computePoteSpend(p.id).gasto, 0);
+    if (totalGastoPotes > 0) {
+      html += '<div class="rep-section"><div class="rep-title">🥧 Distribuição do gasto entre potes</div>';
+      html += '<div class="rep-pie-wrap">';
+      // Constrói gradientes do conic
+      let cumPct = 0;
+      let stops = [];
+      potesArr.forEach(p => {
+        const g = computePoteSpend(p.id).gasto;
+        if (g <= 0) return;
+        const pct = (g / totalGastoPotes) * 100;
+        const cor = p.cor || '#1A7A9A';
+        stops.push(`${cor} ${cumPct.toFixed(2)}% ${(cumPct+pct).toFixed(2)}%`);
+        cumPct += pct;
+      });
+      const conic = stops.length ? `conic-gradient(${stops.join(', ')})` : '#E8EEF5';
+      html += `<div class="rep-pie" style="background:${conic}">
+        <div class="rep-pie-hole">
+          <div class="rep-pie-val">${fmtBRL(totalGastoPotes)}</div>
+          <div class="rep-pie-lbl">total gasto</div>
+        </div>
+      </div>`;
+      html += '<div class="rep-pie-legend">';
+      potesArr.forEach(p => {
+        const g = computePoteSpend(p.id).gasto;
+        if (g <= 0) return;
+        const pct = ((g / totalGastoPotes) * 100).toFixed(1);
+        html += `<div class="rep-pie-leg-item">
+          <span class="rep-pie-leg-dot" style="background:${p.cor||'#1A7A9A'}"></span>
+          <span class="rep-pie-leg-name">${p.icon||'🏺'} ${escapeHtml(p.name)}</span>
+          <span class="rep-pie-leg-pct">${pct}%</span>
+          <span class="rep-pie-leg-val">${fmtBRL(g)}</span>
+        </div>`;
+      });
+      html += '</div></div></div>';
+    }
+  }
+
+  // ═══════════ 3) Gasto por categoria ═══════════
+  const byCat = {};
+  lancamentosArr.forEach(l => {
+    if (l.tipo === 'previsto') return;
+    const c = l.categoria || '— sem categoria —';
+    byCat[c] = (byCat[c] || 0) + (Number(l.valor) || 0);
+  });
+  const catArr = Object.entries(byCat).sort((a,b) => b[1] - a[1]);
+  if (catArr.length) {
+    const totalCat = catArr.reduce((s, [,v]) => s + v, 0);
+    const maxCat = catArr[0][1] || 1;
+    html += '<div class="rep-section"><div class="rep-title">🏷 Gasto por categoria</div>';
+    catArr.forEach(([cat, val]) => {
+      const pct = (val / maxCat) * 100;
+      const pctTotal = totalCat > 0 ? Math.round((val / totalCat) * 100) : 0;
+      html += `
+        <div class="rep-bar-row">
+          <div class="rep-bar-name">${escapeHtml(cat)}</div>
+          <div class="rep-bar-track">
+            <div class="rep-bar-fill" style="background:#2A5580;width:${Math.max(2, pct)}%">${val > 0 && pct > 18 ? fmtBRL(val) : ''}</div>
+          </div>
+          <div class="rep-bar-val">${fmtBRL(val)}</div>
+          <div class="rep-bar-pct">${pctTotal}%</div>
+        </div>`;
+    });
+    html += '</div>';
+  }
+
+  // ═══════════ 4) Evolução mensal: gastos vs faturamento ═══════════
+  const byMonthGasto = {};
+  const byMonthPrev = {};
+  lancamentosArr.forEach(l => {
+    if (!l.data) return;
+    const ym = l.data.substring(0, 7);
+    if (l.tipo === 'previsto') byMonthPrev[ym] = (byMonthPrev[ym] || 0) + (Number(l.valor) || 0);
+    else byMonthGasto[ym] = (byMonthGasto[ym] || 0) + (Number(l.valor) || 0);
+  });
+  const allMonths = new Set([...Object.keys(byMonthGasto), ...Object.keys(byMonthPrev)]);
+  const monthsSorted = [...allMonths].sort();
+  if (monthsSorted.length) {
+    const maxM = Math.max(
+      ...monthsSorted.map(m => (byMonthGasto[m] || 0) + (byMonthPrev[m] || 0)),
+      1
+    );
+    const meses = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+    html += '<div class="rep-section"><div class="rep-title">📅 Evolução de gastos por mês</div>';
+    html += '<div class="rep-monthbars">';
+    monthsSorted.forEach(ym => {
+      const [y, m] = ym.split('-');
+      const lbl = `${meses[parseInt(m)-1]}/${y.slice(-2)}`;
+      const g = byMonthGasto[ym] || 0;
+      const p = byMonthPrev[ym] || 0;
+      const total = g + p;
+      const totalH = (total / maxM) * 100;
+      const gH = total > 0 ? (g / total) * totalH : 0;
+      const pH = total > 0 ? (p / total) * totalH : 0;
+      html += `
+        <div class="rep-monthbar">
+          <div class="rep-monthbar-stack" title="Realizado: ${fmtBRL(g)} | Previsto: ${fmtBRL(p)}">
+            <div class="rep-monthbar-prev" style="height:${pH}%"></div>
+            <div class="rep-monthbar-real" style="height:${gH}%"></div>
+          </div>
+          <div class="rep-monthbar-lbl">${lbl}</div>
+          <div class="rep-monthbar-val">${fmtBRL(total).replace('R$','').trim()}</div>
+        </div>`;
+    });
+    html += '</div>';
+    html += '<div style="font-size:10.5px;color:var(--muted);margin-top:8px;display:flex;align-items:center;gap:14px"><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:var(--teal);display:inline-block"></span>Realizado</span><span style="display:flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:2px;background:var(--orange);display:inline-block"></span>Previsto/Comprometido</span></div>';
+    html += '</div>';
+  }
+
+  // ═══════════ 5) Avanço físico × financeiro (se houver serviços) ═══════════
+  if (TASKS_DEF && TASKS_DEF.length > 0 && orcamento > 0) {
+    let totalDone = 0, totalProg = 0, totalPend = 0;
+    TASKS_DEF.forEach(t => {
+      const cobrado = Number((services[t.id] || {}).cobrado) || 0;
+      const status = state ? state[t.id] : null;
+      if (status === 'done') totalDone += cobrado;
+      else if (status === 'progress') totalProg += cobrado;
+      else totalPend += cobrado;
+    });
+    const pctDone = orcamento > 0 ? (totalDone / orcamento) * 100 : 0;
+    const pctProg = orcamento > 0 ? (totalProg / orcamento) * 100 : 0;
+    const pctPend = orcamento > 0 ? (totalPend / orcamento) * 100 : 0;
+
+    html += `<div class="rep-section"><div class="rep-title">🏗 Avanço físico (por valor de serviço)</div>
+      <div class="rep-stack">
+        <div class="rep-stack-bar">
+          <div class="rep-stack-seg done" style="width:${pctDone}%" title="Concluído: ${fmtBRL(totalDone)}">${pctDone > 8 ? Math.round(pctDone)+'%' : ''}</div>
+          <div class="rep-stack-seg prog" style="width:${pctProg}%" title="Em andamento: ${fmtBRL(totalProg)}">${pctProg > 8 ? Math.round(pctProg)+'%' : ''}</div>
+          <div class="rep-stack-seg pend" style="width:${pctPend}%" title="Pendente: ${fmtBRL(totalPend)}">${pctPend > 8 ? Math.round(pctPend)+'%' : ''}</div>
+        </div>
+        <div class="rep-stack-legend">
+          <span><span class="rep-stack-dot done"></span>Concluído ${fmtBRL(totalDone)}</span>
+          <span><span class="rep-stack-dot prog"></span>Em andamento ${fmtBRL(totalProg)}</span>
+          <span><span class="rep-stack-dot pend"></span>Pendente ${fmtBRL(totalPend)}</span>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  cont.innerHTML = html;
+}
+window.renderRelatorios = renderRelatorios;
+
+
+/* ═══════════════════════════════════════════
+   POTE: criar / editar / excluir
+═══════════════════════════════════════════ */
+function selectPoteColor(el) {
+  document.querySelectorAll('.color-picker .color-swatch').forEach(s => s.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('pf-cor').value = el.dataset.color;
+}
+window.selectPoteColor = selectPoteColor;
+
+function openPoteModal(id) {
+  if (!IS_ADMIN) return;
+  editingPoteId = id || null;
+  document.getElementById('pote-modal-title').textContent = id ? 'Editar pote' : 'Novo pote';
+  document.getElementById('pote-del-btn').style.display = id ? '' : 'none';
+
+  if (id) {
+    const p = potes[id];
+    if (!p) return;
+    document.getElementById('pf-nome').value = p.name || '';
+    document.getElementById('pf-percent').value = (p.percentMeta != null) ? p.percentMeta : '';
+    document.getElementById('pf-cor').value = p.cor || '#1A7A9A';
+    document.getElementById('pf-icon').value = p.icon || '🧱';
+    document.getElementById('pf-desc').value = p.desc || '';
+  } else {
+    document.getElementById('pf-nome').value = '';
+    document.getElementById('pf-percent').value = '';
+    document.getElementById('pf-cor').value = '#1A7A9A';
+    document.getElementById('pf-icon').value = '🧱';
+    document.getElementById('pf-desc').value = '';
+  }
+  // Marca cor ativa
+  const corAtual = document.getElementById('pf-cor').value;
+  document.querySelectorAll('.color-picker .color-swatch').forEach(s => {
+    s.classList.toggle('active', s.dataset.color === corAtual);
+  });
+  // Atualiza resumo de soma de metas
+  refreshPoteMetaSummary();
+  // Liga listener no campo de % pra atualizar o resumo enquanto digita
+  const pctInput = document.getElementById('pf-percent');
+  pctInput.oninput = refreshPoteMetaSummary;
+
+  document.getElementById('pote-modal').classList.add('show');
+  setTimeout(() => document.getElementById('pf-nome').focus(), 50);
+}
+
+function refreshPoteMetaSummary() {
+  const box = document.getElementById('pote-meta-summary');
+  if (!box) return;
+  const orcamento = getOrcamentoTotal();
+  // Soma das metas dos OUTROS potes (excluindo o que está sendo editado)
+  let outras = 0;
+  Object.entries(potes).forEach(([id, p]) => {
+    if (id === editingPoteId) return;
+    outras += Number(p.percentMeta) || 0;
+  });
+  const inputPct = parseFloat((document.getElementById('pf-percent').value || '').replace(',', '.')) || 0;
+  const soma = outras + inputPct;
+  const restanteAteFechar = 100 - outras;
+
+  let cls = '', msg = '';
+  if (Math.abs(soma - 100) < 0.5) {
+    cls = 'ok';
+    msg = `Soma das metas: <strong>${fmtPct(soma)}</strong> ✓ Fechou em 100%.`;
+  } else if (soma > 100.5) {
+    cls = 'warn';
+    msg = `Soma das metas: <strong>${fmtPct(soma)}</strong> — passou ${fmtPct(soma - 100)} de 100%. Reduza pra fechar.`;
+  } else {
+    cls = '';
+    msg = `Outros potes somam ${fmtPct(outras)}. Resta <strong>${fmtPct(restanteAteFechar)}</strong> pra fechar em 100%.`;
+  }
+  if (orcamento > 0 && inputPct > 0) {
+    const r$ = (inputPct / 100) * orcamento;
+    msg += ` Esse pote vai dispor de <strong>${fmtBRL(r$)}</strong> (${fmtPct(inputPct)} do orçamento de ${fmtBRL(orcamento)}).`;
+  } else if (orcamento === 0) {
+    msg += ` <em>Preencha o "cobrado" dos serviços para ver o valor em R$ deste pote.</em>`;
+  }
+  box.className = 'pote-meta-summary ' + cls;
+  box.innerHTML = msg;
+}
+function closePoteModal() {
+  document.getElementById('pote-modal').classList.remove('show');
+  editingPoteId = null;
+}
+window.openPoteModal = openPoteModal;
+window.closePoteModal = closePoteModal;
+
+async function savePote() {
+  if (!IS_ADMIN || !fbSync) return;
+  const nome = document.getElementById('pf-nome').value.trim();
+  const percentMeta = parseFloat((document.getElementById('pf-percent').value || '').replace(',', '.')) || 0;
+  const cor = document.getElementById('pf-cor').value;
+  const icon = document.getElementById('pf-icon').value;
+  const desc = document.getElementById('pf-desc').value.trim();
+
+  if (!nome) {
+    toast({title:'Nome obrigatório', kind:'warn'});
+    return;
+  }
+  if (percentMeta < 0 || percentMeta > 100) {
+    toast({title:'Meta inválida', msg:'Use um valor entre 0 e 100%.', kind:'warn'});
+    return;
+  }
+
+  const id = editingPoteId || ('pote_' + Date.now().toString(36));
+  const order = editingPoteId
+    ? (potes[editingPoteId].order ?? Object.keys(potes).length)
+    : Object.keys(potes).length;
+  const data = { name:nome, percentMeta, cor, icon, desc, order, updatedAt: Date.now() };
+
+  showSaving();
+  try {
+    await fbSync.set(fbSync.ref(fbSync.db, `financials/${OBRA_ID}/potes/${id}`), data);
+    showOnlineSaved();
+    closePoteModal();
+    toast({title: editingPoteId ? 'Pote atualizado' : 'Pote criado', msg:`${nome} · ${fmtPct(percentMeta)}`});
+  } catch(e) {
+    console.error(e);
+    showError('Erro ao salvar pote');
+    toast({title:'Erro ao salvar', msg:e.message, kind:'err'});
+  }
+}
+window.savePote = savePote;
+
+/* Cria os 4 potes padrão da metodologia Plan&jar:
+   Material (50%), Mão de obra (25%), Taxas e Impostos (15%), Lucro (10%).
+   Não sobrescreve potes existentes — só roda quando não há nenhum. */
+async function criarPotesPadrao() {
+  if (!IS_ADMIN || !fbSync) return;
+  // Segurança: se já existem potes, não cria duplicado.
+  if (Object.keys(potes).length > 0) {
+    toast({title:'Já existem potes', msg:'Apague os potes antes de recriar os padrão.', kind:'warn'});
+    return;
+  }
+  const padroes = [
+    { id:'pote_material',    name:'Material',          percentMeta:50, cor:'#1A7A9A', icon:'🧱', desc:'Insumos, materiais de construção, ferramentas e equipamentos.', order:0 },
+    { id:'pote_maodeobra',   name:'Mão de obra',       percentMeta:25, cor:'#1A8A55', icon:'👷', desc:'Salários, diárias, encargos, terceiros e empreiteiros.', order:1 },
+    { id:'pote_taxasimpostos', name:'Taxas e Impostos', percentMeta:15, cor:'#C05A00', icon:'📋', desc:'Tributos, taxas de prefeitura, alvarás, ART, ISS e similares.', order:2 },
+    { id:'pote_lucro',       name:'Lucro',             percentMeta:10, cor:'#5E3FA0', icon:'💰', desc:'Margem da construtora — o lucro é planejado primeiro, não é "o que sobra".', order:3 },
+  ];
+  showSaving();
+  try {
+    const updates = {};
+    const now = Date.now();
+    padroes.forEach(p => {
+      const { id, ...data } = p;
+      updates[`financials/${OBRA_ID}/potes/${id}`] = { ...data, updatedAt: now };
+    });
+    await fbSync.update(fbSync.ref(fbSync.db), updates);
+    showOnlineSaved();
+    toast({title:'4 potes padrão criados', msg:'Material 50% · Mão de obra 25% · Taxas e Impostos 15% · Lucro 10%. Você pode ajustar os percentuais clicando em cada pote.', duration:6500});
+  } catch(e) {
+    console.error('[criarPotesPadrao]', e);
+    showError('Erro ao criar potes padrão');
+    toast({title:'Erro ao criar potes padrão', msg:e.message, kind:'err'});
+  }
+}
+window.criarPotesPadrao = criarPotesPadrao;
+
+/* Recalcula o caminho crítico das atividades usando a heurística de cadeia
+   sequencial: pega a maior cadeia de atividades sem folga (ou sobrepostas)
+   ordenadas pela data de início. Salva o flag "critical" no banco. */
+function _computeCriticalPath(tasks) {
+  if (!tasks || tasks.length === 0) return new Set();
+  const sorted = [...tasks].sort((a,b) => {
+    if (a.start !== b.start) return a.start.localeCompare(b.start);
+    return a.end.localeCompare(b.end);
+  });
+  const N = sorted.length;
+  const dayMs = 86400000;
+  const toDate = s => new Date(s + 'T00:00:00');
+  const dp = new Array(N).fill(0);
+  const parent = new Array(N).fill(-1);
+  for (let i = 0; i < N; i++) {
+    const ti = sorted[i];
+    const dur = (toDate(ti.end) - toDate(ti.start)) / dayMs + 1;
+    dp[i] = dur;
+    for (let j = 0; j < i; j++) {
+      const tj = sorted[j];
+      const gap = (toDate(ti.start) - toDate(tj.end)) / dayMs;
+      if (gap <= 1 && (dp[j] + dur) > dp[i]) {
+        dp[i] = dp[j] + dur;
+        parent[i] = j;
+      }
+    }
+  }
+  let bestEnd = 0;
+  for (let i = 1; i < N; i++) if (dp[i] > dp[bestEnd]) bestEnd = i;
+  const critical = new Set();
+  let cur = bestEnd;
+  while (cur >= 0) { critical.add(sorted[cur].id); cur = parent[cur]; }
+  return critical;
+}
+
+async function recalcCaminhoCritico() {
+  if (!IS_ADMIN || !fbSync) return;
+  if (!TASKS_DEF || TASKS_DEF.length < 2) {
+    toast({title:'Poucas atividades', msg:'Adicione pelo menos 2 atividades pra calcular o caminho crítico.', kind:'warn'});
+    return;
+  }
+  if (!confirm('Recalcular o caminho crítico com base nas datas atuais? Atividades antes marcadas manualmente serão substituídas.')) return;
+
+  const critSet = _computeCriticalPath(TASKS_DEF);
+  showSaving();
+  try {
+    // Atualiza em lote: cada atividade ganha critical=true ou false.
+    const updates = {};
+    TASKS_DEF.forEach(t => {
+      updates[`tasks/${OBRA_ID}/definition/${t.id}/critical`] = critSet.has(t.id);
+    });
+    await fbSync.update(fbSync.ref(fbSync.db), updates);
+    showOnlineSaved();
+    toast({title:'Caminho crítico recalculado', msg:`${critSet.size} atividade${critSet.size>1?'s':''} marcada${critSet.size>1?'s':''} como crítica${critSet.size>1?'s':''} ⚡`});
+  } catch(e) {
+    console.error('[recalcCaminhoCritico]', e);
+    showError('Erro ao recalcular');
+    toast({title:'Erro ao recalcular', msg:e.message, kind:'err'});
+  }
+}
+window.recalcCaminhoCritico = recalcCaminhoCritico;
+
+async function deletePote() {
+  if (!IS_ADMIN || !editingPoteId) return;
+  const p = potes[editingPoteId];
+  if (!p) return;
+  const lancsDoPote = Object.values(lancamentos).filter(l => l.poteId === editingPoteId).length;
+  const msg = `Excluir o pote "${p.name}"?` +
+    (lancsDoPote ? `\n\nAtenção: existem ${lancsDoPote} lançamento(s) vinculado(s) a este pote. Eles ficarão sem pote (mas serão preservados).` : '');
+  if (!confirm(msg)) return;
+
+  showSaving();
+  try {
+    await fbSync.set(fbSync.ref(fbSync.db, `financials/${OBRA_ID}/potes/${editingPoteId}`), null);
+    showOnlineSaved();
+    closePoteModal();
+    toast({title:'Pote excluído', kind:'info'});
+  } catch(e) {
+    showError('Erro ao excluir');
+    toast({title:'Erro', msg:e.message, kind:'err'});
+  }
+}
+window.deletePote = deletePote;
+
+/* ═══════════════════════════════════════════
+   LANÇAMENTO: criar / editar / excluir
+═══════════════════════════════════════════ */
+function openLancamentoModal(id) {
+  if (!IS_ADMIN) return;
+  if (!Object.keys(potes).length) {
+    toast({title:'Crie um pote primeiro', msg:'Você precisa criar pelo menos um pote para registrar lançamentos.', kind:'warn'});
+    switchFinSub('potes');
+    return;
+  }
+  editingLancId = id || null;
+  document.getElementById('lanc-modal-title').textContent = id ? 'Editar lançamento' : 'Novo lançamento';
+  document.getElementById('lanc-del-btn').style.display = id ? '' : 'none';
+
+  // Preenche select de potes
+  const sel = document.getElementById('lf-pote');
+  let opts = '';
+  Object.entries(potes).sort((a,b) => (a[1].order ?? 999) - (b[1].order ?? 999)).forEach(([pid, p]) => {
+    opts += `<option value="${pid}">${escapeHtml(p.name||'')}</option>`;
+  });
+  sel.innerHTML = opts;
+
+  if (id) {
+    const l = lancamentos[id];
+    if (!l) return;
+    sel.value = l.poteId || '';
+    document.getElementById('lf-cat').value = l.categoria || '';
+    document.getElementById('lf-desc').value = l.desc || '';
+    document.getElementById('lf-valor').value = l.valor || '';
+    document.getElementById('lf-data').value = l.data || todayStr();
+    document.getElementById('lf-tipo').value = l.tipo || 'gasto';
+    document.getElementById('lf-pagto').value = l.formaPagto || '';
+    document.getElementById('lf-obs').value = l.obs || '';
+  } else {
+    document.getElementById('lf-cat').value = '';
+    document.getElementById('lf-desc').value = '';
+    document.getElementById('lf-valor').value = '';
+    document.getElementById('lf-data').value = todayStr();
+    document.getElementById('lf-tipo').value = 'gasto';
+    document.getElementById('lf-pagto').value = '';
+    document.getElementById('lf-obs').value = '';
+  }
+  document.getElementById('lanc-modal').classList.add('show');
+  setTimeout(() => document.getElementById('lf-desc').focus(), 50);
+}
+function closeLancamentoModal() {
+  document.getElementById('lanc-modal').classList.remove('show');
+  editingLancId = null;
+}
+window.openLancamentoModal = openLancamentoModal;
+window.closeLancamentoModal = closeLancamentoModal;
+
+async function saveLancamento() {
+  if (!IS_ADMIN || !fbSync) return;
+  const poteId = document.getElementById('lf-pote').value;
+  const cat = document.getElementById('lf-cat').value;
+  const desc = document.getElementById('lf-desc').value.trim();
+  const valor = parseFloat(document.getElementById('lf-valor').value) || 0;
+  const data = document.getElementById('lf-data').value;
+  const tipo = document.getElementById('lf-tipo').value;
+  const formaPagto = document.getElementById('lf-pagto').value;
+  const obs = document.getElementById('lf-obs').value.trim();
+
+  if (!poteId) { toast({title:'Selecione um pote', kind:'warn'}); return; }
+  if (!desc) { toast({title:'Descrição obrigatória', kind:'warn'}); return; }
+  if (!data) { toast({title:'Data obrigatória', kind:'warn'}); return; }
+  if (valor <= 0) { toast({title:'Valor deve ser maior que zero', kind:'warn'}); return; }
+
+  const id = editingLancId || ('lanc_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7));
+  const payload = {
+    poteId, categoria:cat, desc, valor, data, tipo, formaPagto, obs,
+    createdAt: editingLancId ? (lancamentos[editingLancId]?.createdAt || Date.now()) : Date.now(),
+    updatedAt: Date.now(),
+  };
+
+  showSaving();
+  try {
+    await fbSync.set(fbSync.ref(fbSync.db, `financials/${OBRA_ID}/lancamentos/${id}`), payload);
+    showOnlineSaved();
+    closeLancamentoModal();
+    toast({title: editingLancId ? 'Lançamento atualizado' : 'Lançamento registrado', msg:`${desc} · ${fmtBRL(valor)}`});
+  } catch(e) {
+    console.error(e);
+    showError('Erro ao salvar');
+    toast({title:'Erro', msg:e.message, kind:'err'});
+  }
+}
+window.saveLancamento = saveLancamento;
+
+async function deleteLancamento() {
+  if (!IS_ADMIN || !editingLancId) return;
+  const l = lancamentos[editingLancId];
+  if (!l) return;
+  if (!confirm(`Excluir lançamento "${l.desc}" de ${fmtBRL(Number(l.valor)||0)}?`)) return;
+  try {
+    await fbSync.set(fbSync.ref(fbSync.db, `financials/${OBRA_ID}/lancamentos/${editingLancId}`), null);
+    showOnlineSaved();
+    closeLancamentoModal();
+    toast({title:'Lançamento excluído', kind:'info'});
+  } catch(e) {
+    toast({title:'Erro', msg:e.message, kind:'err'});
+  }
+}
+window.deleteLancamento = deleteLancamento;
+
+/* Fecha modais ao clicar no backdrop ou pressionar ESC */
+document.querySelectorAll('.modal-backdrop').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); });
+});
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') document.querySelectorAll('.modal-backdrop.show').forEach(m => m.classList.remove('show'));
+});
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+loadLocal();
+loadNotifPref();
+
+if (typeof navigator !== 'undefined' && navigator.onLine === false) showOffline();
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(render, 120);
+});
+
+window.setFilter = setFilter;
+window.onRowClick = onRowClick;
+window.onStatusClick = onStatusClick;
+window.toggleNotifications = toggleNotifications;
+</script>
+</body>
+</html>
