@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Migração - Plan&jar</title>
+  <style>
+    body{font-family:system-ui;max-width:600px;margin:40px auto;padding:20px}
+    input,button{font-size:14px;padding:8px 12px;margin:4px 0;display:block;width:100%}
+    button{background:#1A7A9A;color:#fff;border:none;cursor:pointer;margin-top:10px}
+    pre{background:#0F1E33;color:#9DD4DC;padding:14px;border-radius:6px;min-height:200px;white-space:pre-wrap;font-size:12px;margin-top:20px}
+    .warn{background:#FEF3C7;padding:12px;border-left:3px solid #D97706;margin:16px 0}
+  </style>
+</head>
+<body>
+  <h1>⚠ Migração de Reorganização</h1>
+  <div class="warn">Faça login com o email de dono (owner) da construtora.</div>
+  <input id="email" type="email" placeholder="Email do owner" autocomplete="off">
+  <input id="pass" type="password" placeholder="Senha" autocomplete="off">
+  <button onclick="runMigration()">Rodar migração</button>
+  <pre id="log">Pronto para rodar.</pre>
+  <script type="module" src="migrate.js"></script>
+</body>
+</html>
