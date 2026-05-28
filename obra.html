@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<meta name="version" content="2026-04-23-v2">
+<title>Acompanhamento de Obra</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/global.css">
+<link rel="stylesheet" href="css/obra.css">
+</head>
+<body>
+
+<!-- Loading -->
+<div id="loading-screen" class="loading-screen">
+  <div class="loader"></div>
+  <div class="loading-text">Carregando cronograma…</div>
+</div>
+
+<!-- Error (escondido inicialmente) -->
+<div id="error-screen" class="error-screen" style="display:none">
+  <div class="icon">🔒</div>
+  <h2 id="error-title">Obra não encontrada</h2>
+  <p id="error-msg">O código ou link informado não corresponde a nenhuma obra ativa.</p>
+  <a href="index.html">Voltar ao início</a>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<!-- Tooltip exibido durante o arrasto/redimensionamento das barras (admin) -->
+<div id="drag-tooltip" class="drag-tooltip">
+  <div class="label" id="drag-tip-label">Movendo</div>
+  <div id="drag-tip-content">—</div>
+</div>
+
+<div id="main" class="shell" style="display:none">
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div class="hdr-brand" id="hdr-brand">
+      <!-- Logo e nome são preenchidos dinamicamente via applyBranding() -->
+      <div class="brand-logo-fallback" id="brand-logo-fb">P</div>
+      <div class="brand-text">
+        <span class="brand-name" id="brand-name">—</span>
+        <span class="brand-tag" id="brand-tag">Sistema de Acompanhamento</span>
+      </div>
+    </div>
+
+    <div class="hdr-center">
+      <div class="hdr-eyebrow">Acompanhamento de Obra — Cronograma Interativo</div>
+      <div class="hdr-title" id="hdr-title">Carregando…</div>
+      <div class="hdr-sub" id="hdr-sub">—</div>
+    </div>
+
+    <div class="hdr-client">
+      <div class="logo-ff" id="client-logo">C</div>
+      <div class="client-text">
+        <div class="client-name" id="client-name">—</div>
+        <div class="client-sub" id="client-sub">Cliente</div>
+      </div>
+      <a href="admin.html" class="hdr-back" title="Voltar ao painel da empresa">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        Painel
+      </a>
+      <a href="index.html" class="hdr-exit" title="Sair" onclick="try{sessionStorage.removeItem('planjar_last_code');}catch(e){}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        Sair
+      </a>
+    </div>
+  </div>
+
+  <div class="prog-strip">
+    <span class="prog-label">Progresso geral</span>
+    <div class="prog-bar-track"><div class="prog-bar-fill" id="prog-fill" style="width:0%"></div></div>
+    <span class="prog-pct" id="prog-pct">0%</span>
+    <div class="today-badge" id="today-badge">—</div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="kpi-val" id="kpi-total">0</div><div class="kpi-lbl">Atividades</div></div>
+    <div class="kpi kpi-done"><div class="kpi-val" id="kpi-done">0</div><div class="kpi-lbl">Concluídas</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-prog">0</div><div class="kpi-lbl">Em andamento</div></div>
+    <div class="kpi"><div class="kpi-val" id="kpi-pend">0</div><div class="kpi-lbl">Pendentes</div></div>
+    <div class="kpi kpi-warn"><div class="kpi-val" id="kpi-end">—</div><div class="kpi-lbl">Previsão de conclusão</div></div>
+    <div class="kpi kpi-warn"><div class="kpi-val" id="kpi-crit">—</div><div class="kpi-lbl">Caminho crítico</div></div>
+  </div>
+</div>
+
+<div class="card">
+  <!-- Abas principais -->
+  <div class="main-tabs">
+    <button class="main-tab active" data-tab="cronograma" onclick="switchMainTab('cronograma')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Cronograma
+    </button>
+    <button class="main-tab" data-tab="financeiro" onclick="switchMainTab('financeiro')">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      Financeiro
+      <span class="tab-pill" id="fin-tab-pill" style="display:none">0</span>
+    </button>
+  </div>
+
+  <!-- ════════ CRONOGRAMA ════════ -->
+  <div class="tab-content active" id="tab-cronograma">
+    <!-- Barra de alterações pendentes (somente admin, aparece quando há mudanças não salvas) -->
+    <div class="pending-bar" id="pending-bar">
+      <div class="pending-icon" id="pending-icon">!</div>
+      <div class="pending-text">
+        <div class="pending-title" id="pending-title">Alterações não salvas</div>
+        <div class="pending-sub" id="pending-sub">—</div>
+      </div>
+      <div class="pending-actions">
+        <button class="pending-btn pending-btn-undo" onclick="undoLastChange()" id="btn-undo" title="Desfazer última alteração (Ctrl+Z)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-15-6.7L3 13"/></svg>
+          Desfazer
+        </button>
+        <button class="pending-btn pending-btn-discard" onclick="discardAllChanges()" title="Descartar todas as alterações pendentes">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          Descartar
+        </button>
+        <button class="pending-btn pending-btn-save" onclick="saveAllPendingChanges()" id="btn-save-pending">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+          <span id="btn-save-pending-label">Salvar alterações</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="hint" id="hint-line">Cronograma atualizado em tempo real <span id="hint-by"></span>&nbsp;·&nbsp; <span id="hint-sync">Sincronização ativa</span></div>
+
+    <div class="filter-bar">
+      <button class="filter-btn active" data-f="all" onclick="setFilter('all',this)">Todas</button>
+      <button class="filter-btn" data-f="pending" onclick="setFilter('pending',this)">Pendentes</button>
+      <button class="filter-btn" data-f="progress" onclick="setFilter('progress',this)">Em andamento</button>
+      <button class="filter-btn" data-f="done" onclick="setFilter('done',this)">Concluídas</button>
+      <button class="filter-btn" data-f="PROJETOS" onclick="setFilter('PROJETOS',this)">📐 Projetos</button>
+      <button class="filter-btn" data-f="OBRA" onclick="setFilter('OBRA',this)">🏗 Obra</button>
+
+      <div class="filter-spacer"></div>
+
+      <span id="admin-badge-wrap" style="display:none"><span class="admin-badge">Modo admin</span></span>
+
+      <span class="edit-hint" title="Arraste a barra para reposicionar; arraste as bordas para redimensionar">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/><polyline points="9 6 3 12 9 18" transform="translate(15 0) scale(-1 1)"/></svg>
+        Arraste para reposicionar · Bolinha azul para ligar
+      </span>
+
+      <button class="tb-btn primary admin-only" id="btn-add-task" onclick="openTaskModal('new')" title="Criar nova atividade no cronograma">
+        <span class="ic">+</span> <span>Nova atividade</span>
+      </button>
+      <button class="tb-btn admin-only" id="btn-add-sub" onclick="openTaskModal('sub')" disabled title="Selecione uma atividade primeiro para criar uma subatividade">
+        <span class="ic">↳</span> <span>Subatividade</span>
+      </button>
+      <button class="tb-btn admin-only" id="btn-link-mode" onclick="toggleLinkingMode()" title="Modo ligar: clique em duas barras para criar uma dependência">
+        <span class="ic">⛓</span> <span>Ligar</span>
+      </button>
+      <button class="tb-btn admin-only" id="btn-deps-bulk" onclick="openDepsBulkModal()" title="Editar todas as dependências em massa, em formato tabela">
+        <span class="ic">📋</span> <span>Editar deps</span>
+      </button>
+
+      <button class="tb-btn admin-only" id="recalc-crit-btn" onclick="recalcCaminhoCritico()" title="Recalcular o caminho crítico (CPM) com base nas dependências e datas">
+        <span class="ic">⚡</span> <span>Caminho crítico</span>
+      </button>
+      <button class="tb-btn admin-only" id="clear-crit-btn" onclick="limparCaminhoCritico()" title="Remover todas as marcações de caminho crítico">
+        <span class="ic">✕</span> <span>Limpar</span>
+      </button>
+
+      <button class="notif-toggle admin-only" id="notif-btn" onclick="toggleNotifications()" title="Notificações do navegador ao concluir atividades">
+        <span id="notif-icon">🔔</span><span id="notif-label">Notificações</span>
+      </button>
+
+      <div class="save-group">
+        <div class="save-indicator admin-only" id="save-ind"><span class="dot"></span><span id="save-lbl">Conectando...</span></div>
+        <button class="icon-btn" onclick="window.print()" title="Imprimir / PDF">🖨</button>
+      </div>
+    </div>
+
+    <div class="gantt-wrap">
+      <div id="gantt-root"></div>
+    </div>
+
+    <div class="legend">
+      <div class="leg-title">Legenda</div>
+      <div class="leg-item"><div class="leg-today"></div><span>Hoje</span></div>
+      <div class="leg-item"><div class="leg-swatch" style="background:var(--bar-pending)"></div><span>Pendente</span></div>
+      <div class="leg-item"><div class="leg-swatch" style="background:var(--bar-progress)"></div><span>Em andamento (no prazo)</span></div>
+      <div class="leg-item"><div class="leg-swatch" style="background:var(--bar-late)"></div><span>Em atraso</span></div>
+      <div class="leg-item"><div class="leg-swatch" style="background:var(--bar-done)"></div><span>Concluída</span></div>
+      <div class="leg-item"><div class="leg-crit"></div><span>Caminho Crítico (folga = 0)</span></div>
+      <div class="leg-item"><svg width="32" height="10" viewBox="0 0 32 10"><path d="M2 5 H26" stroke="currentColor" stroke-width="1.6" fill="none" opacity=".7"/><polygon points="22,2 28,5 22,8" fill="currentColor" opacity=".7"/></svg><span>Dependência</span></div>
+      <div class="leg-item"><div class="status-pill s-pending" style="pointer-events:none">Pendente</div></div>
+      <div class="leg-item"><div class="status-pill s-progress" style="pointer-events:none">Em Andamento</div></div>
+      <div class="leg-item"><div class="status-pill s-done" style="pointer-events:none">Concluído</div></div>
+    </div>
+
+    <!-- ═══════════════ MODAL: criar/editar atividade ═══════════════ -->
+    <div class="gantt-modal-backdrop" id="task-modal" onclick="if(event.target===this)closeTaskModal()">
+      <div class="gantt-modal">
+        <div class="gm-header">
+          <div>
+            <div class="gm-title" id="task-modal-title">Nova atividade</div>
+            <div class="gm-sub" id="task-modal-sub">Preencha os campos abaixo. Sistema preenche o resto.</div>
+          </div>
+          <button class="gm-close" onclick="closeTaskModal()" type="button">×</button>
+        </div>
+        <div class="gm-body">
+          <div class="gm-row">
+            <label class="gm-label">Atividade <span class="req">*</span></label>
+            <input type="text" id="tm-name" class="gm-input" placeholder="Ex: Concretagem da laje do 2º pavimento" maxlength="120">
+            <div class="gm-err" id="tm-err-name">Informe o nome da atividade.</div>
+          </div>
+          <div class="gm-row-grid">
+            <div>
+              <label class="gm-label">Início <span class="req">*</span></label>
+              <input type="date" id="tm-start" class="gm-input">
+              <div class="gm-err" id="tm-err-start">Data de início inválida.</div>
+            </div>
+            <div>
+              <label class="gm-label">Prazo (dias) <span class="req">*</span></label>
+              <input type="number" id="tm-days" class="gm-input" min="1" max="999" step="1" placeholder="ex: 15">
+              <div class="gm-err" id="tm-err-days">Prazo deve ser maior que zero.</div>
+            </div>
+          </div>
+          <div class="gm-row-grid">
+            <div>
+              <label class="gm-label">Departamento</label>
+              <input type="text" id="tm-dept" class="gm-input" placeholder="Ex: Estrutura, Equipe Obra…" list="tm-dept-list">
+              <datalist id="tm-dept-list"></datalist>
+            </div>
+            <div>
+              <label class="gm-label">Fase</label>
+              <select id="tm-phase" class="gm-select">
+                <option value="auto">🤖 Detectar automaticamente</option>
+                <option value="OBRA">🏗 Obra</option>
+                <option value="PROJETOS">📐 Projetos</option>
+              </select>
+            </div>
+          </div>
+          <div class="gm-row">
+            <label class="gm-label">Valor cobrado (R$) <span style="color:var(--c-muted);font-weight:400;font-size:11px">— opcional</span></label>
+            <div class="gm-help" style="margin-bottom:6px">
+              Quanto será cobrado por esse serviço. Aparece em <strong>Financeiro › Serviços</strong>. Deixe vazio se ainda não souber.
+            </div>
+            <input type="number" id="tm-valor" class="gm-input" min="0" step="0.01" placeholder="Ex: 12000,00">
+          </div>
+          <div class="gm-row" id="tm-pred-row">
+            <label class="gm-label">Predecessoras (opcional)</label>
+            <div class="gm-help" style="margin-bottom:6px">
+              Atividades que precisam terminar antes desta começar. Marque uma ou mais. O lag (em dias) ajusta a folga.
+            </div>
+            <details class="pred-text-mode" style="margin-bottom:8px">
+              <summary style="cursor:pointer;font-size:11px;color:var(--c-teal);user-select:none;padding:4px 0">⌨ Digitar como texto (avançado)</summary>
+              <div style="margin-top:6px">
+                <input type="text" id="tm-pred-text" class="gm-input" placeholder="Ex: t01, t02, t03 (separe por vírgula)" autocomplete="off">
+                <div class="gm-help" style="font-size:10.5px;margin-top:4px">
+                  Use os IDs das atividades (visíveis na coluna esquerda) separados por vírgula. Esse campo sobrescreve as marcações da lista abaixo ao salvar.
+                </div>
+              </div>
+            </details>
+            <div class="pred-list" id="tm-pred-list">
+              <div class="pred-empty">Nenhuma outra atividade no cronograma ainda.</div>
+            </div>
+          </div>
+          <div class="gm-err" id="tm-err-general" style="margin-top:6px"></div>
+        </div>
+        <div class="gm-footer">
+          <button class="gm-btn gm-btn-danger" id="tm-btn-delete" onclick="deleteTaskFromModal()" type="button" style="margin-right:auto;display:none">Excluir</button>
+          <button class="gm-btn gm-btn-cancel" onclick="closeTaskModal()" type="button">Cancelar</button>
+          <button class="gm-btn gm-btn-primary" id="tm-btn-save" onclick="saveTaskFromModal()" type="button">Salvar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ MODAL: editar dependências em massa ═══════════════ -->
+    <div class="gantt-modal-backdrop" id="deps-bulk-modal" onclick="if(event.target===this)closeDepsBulkModal()">
+      <div class="gantt-modal wide" style="max-width:920px">
+        <div class="gm-header">
+          <div>
+            <div class="gm-title">Editar dependências em massa</div>
+            <div class="gm-sub">Para cada atividade, digite os IDs das predecessoras separados por vírgula (ex: <code>t01, t02</code>). Vazio = sem predecessoras. As alterações só são gravadas quando você clica em <strong>Salvar todas</strong>.</div>
+          </div>
+          <button class="gm-close" onclick="closeDepsBulkModal()" type="button">×</button>
+        </div>
+        <div class="gm-body" style="max-height:60vh;overflow:auto;padding:0">
+          <table class="deps-bulk-table" id="deps-bulk-table">
+            <thead>
+              <tr>
+                <th style="width:90px">ID</th>
+                <th>Atividade</th>
+                <th style="width:340px">Predecessoras</th>
+                <th style="width:80px">Lag</th>
+              </tr>
+            </thead>
+            <tbody id="deps-bulk-body"></tbody>
+          </table>
+        </div>
+        <div class="gm-footer">
+          <span id="deps-bulk-summary" style="margin-right:auto;font-size:11.5px;color:var(--c-muted)"></span>
+          <button class="gm-btn gm-btn-cancel" onclick="closeDepsBulkModal()" type="button">Cancelar</button>
+          <button class="gm-btn gm-btn-primary" id="deps-bulk-save" onclick="saveDepsBulk()" type="button">Salvar todas</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ MODAL: propagação de mudança de data ═══════════════ -->
+    <div class="gantt-modal-backdrop" id="propag-modal" onclick="if(event.target===this)cancelPropag()">
+      <div class="gantt-modal wide">
+        <div class="gm-header">
+          <div>
+            <div class="gm-title">As sucessoras podem precisar mover</div>
+            <div class="gm-sub" id="propag-sub">Você mudou as datas de uma atividade que tem dependentes. O que fazer com cada uma?</div>
+          </div>
+          <button class="gm-close" onclick="cancelPropag()" type="button">×</button>
+        </div>
+        <div class="gm-body">
+          <div class="propag-list" id="propag-list"></div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <button class="propag-pill" onclick="setAllPropag('move')" type="button">Mover todas</button>
+            <button class="propag-pill" onclick="setAllPropag('keep')" type="button">Manter todas paradas</button>
+          </div>
+        </div>
+        <div class="gm-footer">
+          <button class="gm-btn gm-btn-cancel" onclick="cancelPropag()" type="button">Cancelar mudança</button>
+          <button class="gm-btn gm-btn-primary" onclick="applyPropag()" type="button">Aplicar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ POPOVER: ações por linha ═══════════════ -->
+    <div class="row-popover" id="row-popover"></div>
+  </div>
+
+  <!-- ════════ FINANCEIRO ════════ -->
+  <div class="tab-content" id="tab-financeiro">
+    <!-- Sub-abas -->
+    <div class="fin-subtabs">
+      <button class="fin-subtab active" data-sub="servicos" onclick="switchFinSub('servicos')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3h18v4H3zM3 11h18v4H3zM3 19h18v2H3z"/></svg>
+        Serviços
+      </button>
+      <button class="fin-subtab" data-sub="potes" onclick="switchFinSub('potes')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h14l-1.5 12h-11z"/><path d="M9 8V5a3 3 0 0 1 6 0v3"/></svg>
+        Potes (metas %)
+      </button>
+      <button class="fin-subtab admin-only" data-sub="lancamentos" onclick="switchFinSub('lancamentos')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        Lançamentos
+      </button>
+      <button class="fin-subtab" data-sub="medicoes" onclick="switchFinSub('medicoes')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 4 4 5-5"/></svg>
+        Físico × Financeiro
+      </button>
+      <button class="fin-subtab admin-only" data-sub="relatorios" onclick="switchFinSub('relatorios')">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 21H3"/><path d="M7 17V9"/><path d="M12 17V5"/><path d="M17 17v-6"/></svg>
+        Relatórios
+      </button>
+      <div class="filter-spacer"></div>
+      <button class="btn-primary admin-only" onclick="openPoteModal()" id="btn-new-pote" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo pote
+      </button>
+      <button class="btn-primary admin-only" onclick="openLancamentoModal()" id="btn-new-lanc" style="display:none">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Novo lançamento
+      </button>
+    </div>
+
+    <!-- Resumo financeiro -->
+    <div class="fin-summary" id="fin-summary"></div>
+
+    <!-- Conteúdo das sub-abas -->
+
+    <!-- SERVIÇOS (cobrado × realizado por item do cronograma) -->
+    <div class="fin-pane active" id="fin-pane-servicos">
+      <div class="services-help">
+        <strong>Como funciona:</strong> cada atividade do cronograma vira uma linha aqui. Preencha o <em>cobrado</em> (o que vai cobrar do cliente por aquele serviço) e o <em>realizado</em> (o que já foi efetivamente faturado). A soma do cobrado é o orçamento total da obra — base do cálculo dos potes em %.
+      </div>
+      <div class="services-table-wrap">
+        <table class="services-table" id="services-table">
+          <thead>
+            <tr>
+              <th style="width:48px">#</th>
+              <th>Serviço</th>
+              <th class="num">Cobrado (R$)</th>
+              <th class="num">Realizado (R$)</th>
+              <th class="num">Diferença</th>
+            </tr>
+          </thead>
+          <tbody id="services-body"></tbody>
+          <tfoot id="services-foot"></tfoot>
+        </table>
+      </div>
+      <div id="services-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">📋</div>
+        <div class="empty-title">Sem serviços no cronograma</div>
+        <div class="empty-sub">Importe a planilha de atividades pelo painel admin pra os serviços aparecerem aqui.</div>
+      </div>
+    </div>
+
+    <!-- POTES (metas %) -->
+    <div class="fin-pane" id="fin-pane-potes">
+      <div id="potes-grid" class="potes-grid"></div>
+      <div id="potes-summary-bar" class="potes-summary-bar" style="display:none"></div>
+      <div id="potes-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">🏺</div>
+        <div class="empty-title">Nenhum pote criado ainda</div>
+        <div class="empty-sub admin-only">Crie os potes padrão (Material, Mão de obra, Taxas e Impostos, Lucro) ou clique em <strong>Novo pote</strong> pra começar do zero.</div>
+        <div class="empty-sub" style="display:block" id="empty-pote-client">A construtora ainda não configurou as metas de % desta obra.</div>
+        <button class="btn-primary admin-only" id="btn-criar-potes-padrao" onclick="criarPotesPadrao()" style="margin-top:18px;gap:8px">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+          Criar 4 potes padrão
+        </button>
+      </div>
+    </div>
+
+    <div class="fin-pane" id="fin-pane-lancamentos">
+      <div class="lanc-filters">
+        <select id="lanc-filter-pote" class="form-input-small" onchange="renderLancamentos()">
+          <option value="">Todos os potes</option>
+        </select>
+        <select id="lanc-filter-cat" class="form-input-small" onchange="renderLancamentos()">
+          <option value="">Todas as categorias</option>
+        </select>
+        <input type="search" id="lanc-search" class="form-input-small" placeholder="Buscar descrição…" oninput="renderLancamentos()">
+      </div>
+      <div id="lanc-list" class="lanc-list"></div>
+      <div id="lanc-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">📒</div>
+        <div class="empty-title">Nenhum lançamento ainda</div>
+        <div class="empty-sub">Os lançamentos vão aparecer aqui conforme forem registrados.</div>
+      </div>
+    </div>
+
+    <!-- MEDIÇÕES — matriz mensal (linhas: serviços, colunas: meses) -->
+    <div class="fin-pane" id="fin-pane-medicoes">
+      <div class="services-help">
+        <strong>Boletim de medição mensal:</strong> a tabela cruza os <em>serviços do cronograma</em> com os <em>meses</em> da obra. Cada célula mostra quanto foi medido daquele serviço naquele mês, calculado pela faixa de execução (datas no cronograma) × % concluído. Total por mês embaixo, total por serviço à direita.
+      </div>
+
+      <div class="medicao-toolbar admin-only">
+        <span class="medicao-toolbar-lbl">Visualização</span>
+        <button class="medicao-mode active" data-mmode="acumulado" onclick="setMedicaoMode('acumulado')">Acumulado</button>
+        <button class="medicao-mode" data-mmode="mensal" onclick="setMedicaoMode('mensal')">Por mês</button>
+      </div>
+
+      <div class="medicao-matrix-wrap" id="medicao-matrix-wrap">
+        <!-- A matriz é construída via JS em renderMedicoes() -->
+      </div>
+
+      <div id="medicoes-empty" class="empty-state" style="display:none">
+        <div class="empty-icon">📐</div>
+        <div class="empty-title">Sem dados de medição</div>
+        <div class="empty-sub">Preencha o cobrado dos serviços e atualize o status no cronograma para ver o boletim aqui.</div>
+      </div>
+    </div>
+
+    <!-- RELATÓRIOS — só admin -->
+    <div class="fin-pane" id="fin-pane-relatorios">
+      <div id="relatorios-content"></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <div class="footer-l" id="footer-company">Sistema de Acompanhamento · Construa com clareza</div>
+  <div class="footer-r" id="footer-rev">Cronograma de Obra</div>
+</div>
+</div>
+
+<!-- ════════ MODAL POTE ════════ -->
+<div id="pote-modal" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="pote-modal-title">Novo pote</div>
+      <button class="modal-close" onclick="closePoteModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="pote-meta-summary" class="pote-meta-summary"></div>
+      <div class="form-grid">
+        <div class="form-grid-full">
+          <label class="form-lbl">Nome do pote *</label>
+          <input id="pf-nome" class="form-input" placeholder="Ex: Materiais, Mão de obra, Lucro">
+        </div>
+        <div>
+          <label class="form-lbl">Meta (% do orçamento) *</label>
+          <input id="pf-percent" class="form-input" type="number" min="0" max="100" step="0.5" placeholder="Ex: 40">
+          <div class="field-help" id="pf-percent-help">A soma das metas dos potes precisa fechar em 100%.</div>
+        </div>
+        <div>
+          <label class="form-lbl">Cor do pote</label>
+          <div class="color-picker">
+            <span class="color-swatch" data-color="#1A7A9A" style="background:#1A7A9A" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#1A8A55" style="background:#1A8A55" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#C05A00" style="background:#C05A00" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#5E3FA0" style="background:#5E3FA0" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#B07010" style="background:#B07010" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#7A2A6B" style="background:#7A2A6B" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#0E4A2E" style="background:#0E4A2E" onclick="selectPoteColor(this)"></span>
+            <span class="color-swatch" data-color="#2A4E7A" style="background:#2A4E7A" onclick="selectPoteColor(this)"></span>
+            <input id="pf-cor" type="hidden" value="#1A7A9A">
+          </div>
+        </div>
+        <div>
+          <label class="form-lbl">Ícone</label>
+          <select id="pf-icon" class="form-input">
+            <option value="🧱">🧱 Materiais</option>
+            <option value="👷">👷 Mão de obra</option>
+            <option value="💰">💰 Lucro</option>
+            <option value="📋">📋 Impostos / tributos</option>
+            <option value="🏗">🏗 Obra</option>
+            <option value="🏠">🏠 Casa</option>
+            <option value="🔨">🔨 Ferramentas</option>
+            <option value="⚡">⚡ Elétrica</option>
+            <option value="🚿">🚿 Hidráulica</option>
+            <option value="🪟">🪟 Esquadrias</option>
+            <option value="🎨">🎨 Pintura</option>
+            <option value="📐">📐 Projetos</option>
+            <option value="🚚">🚚 Logística</option>
+            <option value="🏺">🏺 Outro</option>
+          </select>
+        </div>
+        <div class="form-grid-full">
+          <label class="form-lbl">Descrição (opcional)</label>
+          <textarea id="pf-desc" class="form-input" rows="2" placeholder="Detalhes sobre o que esse pote cobre…"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-secondary danger" onclick="deletePote()" id="pote-del-btn" style="display:none;margin-right:auto">Excluir pote</button>
+      <button class="btn-secondary" onclick="closePoteModal()">Cancelar</button>
+      <button class="btn-primary" onclick="savePote()">Salvar pote</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ MODAL LANÇAMENTO ════════ -->
+<div id="lanc-modal" class="modal-backdrop">
+  <div class="modal">
+    <div class="modal-hdr">
+      <div class="modal-title" id="lanc-modal-title">Novo lançamento</div>
+      <button class="modal-close" onclick="closeLancamentoModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div>
+          <label class="form-lbl">Pote / centro de custo *</label>
+          <select id="lf-pote" class="form-input"></select>
+        </div>
+        <div>
+          <label class="form-lbl">Categoria</label>
+          <select id="lf-cat" class="form-input">
+            <option value="">— sem categoria —</option>
+            <option value="Material">Material</option>
+            <option value="Mão de obra">Mão de obra</option>
+            <option value="Serviço terceirizado">Serviço terceirizado</option>
+            <option value="Equipamento">Equipamento / Aluguel</option>
+            <option value="Taxas">Taxas / Impostos</option>
+            <option value="Outros">Outros</option>
+          </select>
+        </div>
+        <div class="form-grid-full">
+          <label class="form-lbl">Descrição *</label>
+          <input id="lf-desc" class="form-input" placeholder="Ex: Compra de cimento - 50 sacos">
+        </div>
+        <div>
+          <label class="form-lbl">Valor (R$) *</label>
+          <input id="lf-valor" class="form-input" type="number" step="0.01" min="0" placeholder="0,00">
+        </div>
+        <div>
+          <label class="form-lbl">Data *</label>
+          <input id="lf-data" class="form-input" type="date">
+        </div>
+        <div>
+          <label class="form-lbl">Tipo</label>
+          <select id="lf-tipo" class="form-input">
+            <option value="gasto">Gasto realizado</option>
+            <option value="previsto">Previsto / Compromisso</option>
+          </select>
+        </div>
+        <div>
+          <label class="form-lbl">Forma de pagamento</label>
+          <select id="lf-pagto" class="form-input">
+            <option value="">— a definir —</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="PIX">PIX</option>
+            <option value="Transferência">Transferência</option>
+            <option value="Cartão">Cartão</option>
+            <option value="Boleto">Boleto</option>
+            <option value="Cheque">Cheque</option>
+          </select>
+        </div>
+        <div class="form-grid-full">
+          <label class="form-lbl">Observação (opcional)</label>
+          <textarea id="lf-obs" class="form-input" rows="2" placeholder="Nota fiscal, fornecedor, etc."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn-secondary danger" onclick="deleteLancamento()" id="lanc-del-btn" style="display:none;margin-right:auto">Excluir</button>
+      <button class="btn-secondary" onclick="closeLancamentoModal()">Cancelar</button>
+      <button class="btn-primary" onclick="saveLancamento()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script type="module">
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBJoDou1VsHAIAbVjESOGVh23dezmLETrE",
+  authDomain: "franco-e-fragoso-advocacia.firebaseapp.com",
+  databaseURL: "https://franco-e-fragoso-advocacia-default-rtdb.firebaseio.com",
+  projectId: "franco-e-fragoso-advocacia",
+  storageBucket: "franco-e-fragoso-advocacia.firebasestorage.app",
+  messagingSenderId: "1096895063248",
+  appId: "1:1096895063248:web:68a5c866e229124f3faad5"
+};
+
+try {
+  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+  const { getDatabase, ref, onValue, set, update, remove, get } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js');
+  const { getAuth, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js');
+
+  const app = initializeApp(FIREBASE_CONFIG);
+  const db = getDatabase(app);
+  const auth = getAuth(app);
+
+  // Espera o Firebase Auth restaurar a sessão persistida (IndexedDB) ANTES
+  // de avisar o app que está pronto. Sem isso, no admin (nova aba aberta a
+  // partir de admin.html) os writes saem antes do auth ser restaurado e o
+  // Firebase responde PERMISSION_DENIED pela regra "auth != null".
+  const authReady = new Promise(resolve => {
+    const unsub = onAuthStateChanged(auth, user => {
+      // Resolve sempre, com user (logado) ou null (cliente sem login).
+      // O obra.html já distingue admin vs cliente pelo querystring (?admin=1).
+      unsub();
+      resolve(user);
+    });
+  });
+
+  // Timeout de segurança: se por algum motivo o onAuthStateChanged demorar,
+  // segue mesmo assim (o cliente leitor não precisa de auth).
+  const authTimeout = new Promise(resolve => setTimeout(() => resolve(null), 4000));
+  const user = await Promise.race([authReady, authTimeout]);
+
+  window.__FB__ = { db, ref, onValue, set, update, remove, get, auth, currentUser: user };
+  window.dispatchEvent(new CustomEvent('firebase-ready'));
+} catch (err) {
+  console.error('[Firebase] erro ao inicializar:', err);
+  window.__FB_ERROR__ = err.message;
+  window.dispatchEvent(new CustomEvent('firebase-failed'));
+}
+</script>
+
+<script src="js/obra.js" defer></script>
+</body>
+</html>
