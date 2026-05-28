@@ -1,0 +1,39 @@
+/* =========================================
+   global.css - Base e Variáveis
+========================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700&family=Cormorant+Garamond:wght@400;500;600&display=swap');
+
+:root {
+  /* Paleta Unificada Plan&jar */
+  --c-deep: #052028;          /* Fundo escuro premium */
+  --c-navy: #0B2E38;          /* Topbars / Navs */
+  --c-teal: #1A4F5C;          /* Corpo escuro */
+  --c-mid: #286478;           /* Teal médio */
+  --c-bright: #64A0A0;        /* Teal claro intermediário */
+  --c-light: #78B4B4;         /* Teal claro */
+  
+  /* Status & Alertas */
+  --c-success: #1A8A55;
+  --c-danger: #C0392B;
+  --c-warning: #C05A00;
+  
+  /* Textos & Superfícies */
+  --text-main: #FFFFFF;
+  --text-muted: rgba(255, 255, 255, 0.7);
+  --bg-surface: #F8F9FA;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--c-deep);
+  color: var(--text-main);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Classes utilitárias globais (Modais, Toasts, etc) podem vir aqui */
