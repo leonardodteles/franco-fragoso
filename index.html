@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>Plan&jar — Acompanhamento de Obra</title>
+<meta name="description" content="Acompanhe sua obra em tempo real. Digite o código fornecido pela construtora e veja cronograma e progresso na hora.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --c-deep:#052028;          /* navy ultra escuro (fundo) */
+  --c-navy:#0B2E38;          /* navy escuro padrão */
+  --c-teal:#1A4F5C;          /* corpo do P (escuro) */
+  --c-mid:#286478;           /* teal médio do logo */
+  --c-bright:#64A0A0;        /* teal claro intermediário */
+  --c-light:#78B4B4;         /* teal claro do logo (boca do pote) */
+  --c-cyan:#9DD4DC;          /* highlights/partículas */
+  --c-text:#0F1E33;
+  --c-muted:#5C7185;
+  --c-border:#D5DEE9;
+  --c-bg-soft:#F4F8FC;
+  --c-success:#15A05A;
+  --c-error:#D14438;
+  --c-error-bg:#FCE9E6;
+}
+
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+  color:var(--c-text);
+  -webkit-font-smoothing:antialiased;
+  background:var(--c-deep);
+  position:relative;
+}
+
+/* ═══════════════ FUNDO ANIMADO ═══════════════ */
+.bg{position:fixed;inset:0;z-index:0;overflow:hidden;background:linear-gradient(140deg,var(--c-deep) 0%,var(--c-navy) 45%,#0E2D38 100%)}
+
+/* Blobs gradientes flutuando — mais visíveis agora */
+.bg-blob{
+  position:absolute;border-radius:50%;
+  filter:blur(60px);
+  will-change:transform,opacity;
+}
+.bg-blob.b1{
+  width:540px;height:540px;
+  top:-160px;left:-100px;
+  background:radial-gradient(circle,var(--c-bright) 0%,transparent 70%);
+  opacity:.65;
+  animation:floatBlob1 16s ease-in-out infinite;
+}
+.bg-blob.b2{
+  width:620px;height:620px;
+  bottom:-200px;right:-140px;
+  background:radial-gradient(circle,var(--c-mid) 0%,transparent 70%);
+  opacity:.55;
+  animation:floatBlob2 20s ease-in-out infinite;
+}
+.bg-blob.b3{
+  width:400px;height:400px;
+  top:35%;right:10%;
+  background:radial-gradient(circle,var(--c-cyan) 0%,transparent 70%);
+  opacity:.40;
+  animation:floatBlob3 24s ease-in-out infinite;
+}
+.bg-blob.b4{
+  width:350px;height:350px;
+  top:55%;left:14%;
+  background:radial-gradient(circle,var(--c-teal) 0%,transparent 70%);
+  opacity:.55;
+  animation:floatBlob4 18s ease-in-out infinite;
+}
+
+@keyframes floatBlob1{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(110px,100px) scale(1.12)}
+}
+@keyframes floatBlob2{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(-130px,-80px) scale(.88)}
+}
+@keyframes floatBlob3{
+  0%,100%{transform:translate(0,0) scale(1)}
+  33%{transform:translate(-70px,50px) scale(1.08)}
+  66%{transform:translate(50px,-70px) scale(.92)}
+}
+@keyframes floatBlob4{
+  0%,100%{transform:translate(0,0) scale(1)}
+  50%{transform:translate(80px,-60px) scale(1.1)}
+}
+
+/* Grid pattern (estilo blueprint) */
+.bg-grid{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(155,225,235,.04) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(155,225,235,.04) 1px,transparent 1px);
+  background-size:54px 54px;
+  mask-image:radial-gradient(ellipse 75% 65% at 50% 50%,#000 25%,transparent 90%);
+  -webkit-mask-image:radial-gradient(ellipse 75% 65% at 50% 50%,#000 25%,transparent 90%);
+}
+
+/* Barras de cronograma flutuando atrás (sutis, decorativas) */
+.bg-bars{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.bg-bar{
+  position:absolute;height:6px;border-radius:3px;
+  background:linear-gradient(90deg,transparent,var(--c-bright),transparent);
+  opacity:0;
+  animation:driftBar 14s linear infinite;
+}
+.bg-bar:nth-child(1){top:14%;left:-30%;width:38%;animation-delay:0s;animation-duration:18s}
+.bg-bar:nth-child(2){top:78%;left:-30%;width:28%;animation-delay:3s;animation-duration:14s}
+.bg-bar:nth-child(3){top:46%;left:-30%;width:32%;animation-delay:7s;animation-duration:22s}
+.bg-bar:nth-child(4){top:88%;left:-30%;width:42%;animation-delay:11s;animation-duration:16s}
+
+@keyframes driftBar{
+  0%{transform:translateX(0);opacity:0}
+  10%{opacity:.6}
+  85%{opacity:.6}
+  100%{transform:translateX(280vw);opacity:0}
+}
+
+/* Pontos brilhando */
+.bg-dots{position:absolute;inset:0;pointer-events:none}
+.bg-dots span{
+  position:absolute;
+  width:4px;height:4px;border-radius:50%;
+  background:var(--c-cyan);
+  box-shadow:0 0 14px var(--c-cyan), 0 0 6px var(--c-bright);
+  opacity:0;
+  animation:twinkle 4s ease-in-out infinite;
+}
+.bg-dots span:nth-child(1){top:18%;left:12%;animation-delay:0s}
+.bg-dots span:nth-child(2){top:28%;left:88%;animation-delay:.6s}
+.bg-dots span:nth-child(3){top:62%;left:20%;animation-delay:1.2s}
+.bg-dots span:nth-child(4){top:78%;left:72%;animation-delay:1.8s}
+.bg-dots span:nth-child(5){top:42%;left:6%;animation-delay:2.4s}
+.bg-dots span:nth-child(6){top:88%;left:32%;animation-delay:3.0s}
+.bg-dots span:nth-child(7){top:12%;left:55%;animation-delay:3.6s}
+.bg-dots span:nth-child(8){top:34%;left:38%;animation-delay:1.0s}
+.bg-dots span:nth-child(9){top:68%;left:88%;animation-delay:2.0s}
+@keyframes twinkle{
+  0%,100%{opacity:0;transform:scale(.5)}
+  50%{opacity:1;transform:scale(1)}
+}
+
+/* ═══════════════ TOPBAR ═══════════════ */
+.topbar{
+  position:fixed;top:0;left:0;right:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:22px 32px;
+  pointer-events:none;
+  animation:fadeDown .6s ease both;
+}
+.topbar > *{pointer-events:auto}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+
+.brand{
+  display:inline-flex;align-items:center;gap:11px;
+  color:#fff;text-decoration:none;
+}
+.brand-mark{
+  display:flex;align-items:center;justify-content:center;
+  height:42px;
+  filter:drop-shadow(0 4px 12px rgba(120,180,180,.45));
+}
+.brand-mark img{display:block}
+.brand-text{
+  display:flex;flex-direction:column;line-height:1;
+}
+.brand-name{
+  font-weight:800;font-size:16px;letter-spacing:1.5px;color:#fff;
+}
+.brand-name .amp{color:var(--c-bright);font-weight:700;margin:0 1px}
+.brand-tag{
+  font-size:8.5px;font-weight:600;letter-spacing:2px;text-transform:uppercase;
+  color:rgba(255,255,255,.5);margin-top:3px;
+}
+
+.empresa-link{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:12.5px;font-weight:500;
+  color:rgba(255,255,255,.78);text-decoration:none;
+  padding:8px 14px;border-radius:8px;
+  border:1px solid rgba(155,225,235,.16);
+  background:rgba(155,225,235,.04);
+  backdrop-filter:blur(10px);
+  transition:all .2s;
+}
+.empresa-link:hover{
+  background:rgba(155,225,235,.10);
+  border-color:rgba(155,225,235,.30);
+  color:#fff;transform:translateY(-1px);
+}
+.empresa-link svg{opacity:.85}
+
+/* ═══════════════ MAIN ═══════════════ */
+.main{
+  position:relative;z-index:5;
+  width:100vw;height:100vh;
+  display:flex;align-items:center;justify-content:center;
+  padding:24px;
+}
+
+.card{
+  position:relative;
+  width:100%;max-width:440px;
+  background:rgba(255,255,255,.985);
+  border-radius:20px;
+  padding:42px 40px 36px;
+  box-shadow:
+    0 30px 80px rgba(8,32,40,.55),
+    0 6px 22px rgba(8,32,40,.30),
+    inset 0 1px 0 rgba(255,255,255,.7);
+  animation:cardIn .75s cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes cardIn{
+  from{opacity:0;transform:translateY(24px) scale(.96)}
+  to{opacity:1;transform:translateY(0) scale(1)}
+}
+
+/* Linha decorativa no topo do card */
+.card::before{
+  content:"";
+  position:absolute;top:0;left:24px;right:24px;height:3px;
+  background:linear-gradient(90deg,var(--c-teal) 0%,var(--c-mid) 50%,var(--c-bright) 100%);
+  border-radius:0 0 3px 3px;
+}
+
+.card-icon{
+  display:flex;align-items:center;justify-content:center;
+  margin:0 auto 18px;
+  height:86px;
+  filter:drop-shadow(0 8px 22px rgba(26,79,92,.30));
+  animation:floatLogo 3.5s ease-in-out infinite;
+}
+.card-icon img{display:block}
+@keyframes floatLogo{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+
+.card-eyebrow{
+  text-align:center;
+  font-size:11px;font-weight:600;letter-spacing:1.8px;text-transform:uppercase;
+  color:var(--c-mid);
+  margin-bottom:10px;
+}
+
+.card-title{
+  text-align:center;
+  font-size:24px;font-weight:700;line-height:1.18;letter-spacing:-.4px;
+  color:var(--c-text);
+  margin-bottom:8px;
+}
+.card-title .accent{
+  background:linear-gradient(135deg,var(--c-teal) 0%,var(--c-mid) 60%,var(--c-bright) 100%);
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+.card-sub{
+  text-align:center;
+  font-size:13.5px;color:var(--c-muted);line-height:1.5;
+  margin-bottom:28px;
+  max-width:340px;margin-left:auto;margin-right:auto;
+}
+
+.field-lbl{
+  display:block;
+  font-size:10.5px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;
+  color:var(--c-muted);
+  margin-bottom:10px;
+}
+
+.input{
+  width:100%;padding:17px 18px;
+  font-size:18px;font-weight:600;
+  letter-spacing:2.4px;text-transform:uppercase;text-align:center;
+  font-family:inherit;color:var(--c-text);
+  border:2px solid var(--c-border);border-radius:11px;
+  background:#FAFCFE;outline:none;
+  transition:border-color .2s,box-shadow .2s,background .2s;
+}
+.input::placeholder{color:#B7C5D4;font-weight:500}
+.input:focus{
+  border-color:var(--c-mid);
+  background:#fff;
+  box-shadow:0 0 0 4px rgba(44,122,138,.15);
+}
+.input.error{
+  border-color:var(--c-error);
+  background:var(--c-error-bg);
+  animation:shake .42s ease;
+}
+@keyframes shake{
+  0%,100%{transform:translateX(0)}
+  25%{transform:translateX(-7px)}
+  75%{transform:translateX(7px)}
+}
+
+.hint{
+  font-size:12px;color:var(--c-muted);
+  margin-top:11px;text-align:center;
+  min-height:18px;line-height:1.45;
+}
+.hint.err{color:var(--c-error);font-weight:500}
+
+.btn{
+  width:100%;margin-top:18px;padding:15px;
+  font-size:13px;font-weight:600;letter-spacing:1.4px;text-transform:uppercase;
+  font-family:inherit;color:#fff;
+  background:linear-gradient(135deg,var(--c-teal) 0%,var(--c-mid) 100%);
+  border:none;border-radius:11px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;
+  box-shadow:0 8px 22px rgba(26,79,92,.40),inset 0 1px 0 rgba(255,255,255,.18);
+  transition:transform .2s,box-shadow .2s;
+  position:relative;overflow:hidden;
+}
+.btn::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.20),transparent 55%);
+  opacity:0;transition:opacity .2s;
+}
+.btn:hover:not(:disabled){
+  transform:translateY(-2px);
+  box-shadow:0 14px 30px rgba(26,79,92,.55);
+}
+.btn:hover:not(:disabled)::after{opacity:1}
+.btn:active:not(:disabled){transform:translateY(0)}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn .spin{
+  width:14px;height:14px;
+  border:2px solid rgba(255,255,255,.4);border-top-color:#fff;
+  border-radius:50%;
+  animation:spin .7s linear infinite;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Selos */
+.tags{
+  display:flex;justify-content:center;gap:18px;flex-wrap:wrap;
+  margin-top:22px;padding-top:20px;
+  border-top:1px solid var(--c-border);
+}
+.tag{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:11.5px;color:var(--c-muted);font-weight:500;
+}
+.tag-icon{
+  width:18px;height:18px;border-radius:50%;
+  background:var(--c-bg-soft);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--c-success);flex-shrink:0;
+}
+
+/* ═══════════════ STATUS BAR ═══════════════ */
+.status-bar{
+  position:fixed;bottom:24px;left:50%;
+  transform:translateX(-50%) translateY(80px);
+  background:rgba(8,32,40,.92);backdrop-filter:blur(12px);
+  color:#fff;font-size:12px;font-weight:500;
+  padding:10px 18px;border-radius:50px;
+  display:flex;align-items:center;gap:8px;
+  box-shadow:0 8px 28px rgba(0,0,0,.4);
+  border:1px solid rgba(155,225,235,.18);
+  opacity:0;transition:all .35s cubic-bezier(.2,.7,.3,1);z-index:200;
+  pointer-events:none;
+}
+.status-bar.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.status-bar .dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--c-success);
+  animation:pulse 1.5s ease-in-out infinite;
+}
+@keyframes pulse{
+  0%,100%{opacity:1;transform:scale(1)}
+  50%{opacity:.55;transform:scale(.85)}
+}
+.status-bar.error{background:var(--c-error);border-color:rgba(255,255,255,.2)}
+.status-bar.error .dot{background:#fff}
+
+/* ═══════════════ RESPONSIVO ═══════════════ */
+@media (max-width:540px){
+  .topbar{padding:16px 18px}
+  .empresa-link{padding:7px 12px;font-size:11.5px}
+  .empresa-link .lbl-full{display:none}
+  .brand-mark{width:32px;height:36px}
+  .brand-name{font-size:14px;letter-spacing:1.2px}
+  .brand-tag{font-size:8px;letter-spacing:1.6px}
+  .card{padding:34px 26px 28px;border-radius:18px}
+  .card-title{font-size:21px}
+  .card-sub{font-size:13px;margin-bottom:24px}
+  .input{font-size:16px;padding:15px 16px;letter-spacing:2px}
+  .input::placeholder{letter-spacing:2px}
+  .tags{gap:14px;margin-top:18px;padding-top:16px}
+  .tag{font-size:11px}
+  .btn{font-size:12.5px;padding:14px}
+}
+@media (max-width:380px){
+  .card{padding:30px 22px 24px}
+  .card-icon{width:52px;height:58px;margin-bottom:14px}
+  .card-title{font-size:19px}
+}
+@media (max-height:680px){
+  .card{padding:28px 36px 24px}
+  .card-icon{margin-bottom:12px}
+  .card-sub{margin-bottom:20px}
+}
+
+@media (prefers-reduced-motion:reduce){
+  .bg-blob,.bg-dots span,.bg-bar,.card,.card-icon,.btn,.status-bar .dot{animation:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ═════ FUNDO ANIMADO ═════ -->
+<div class="bg" aria-hidden="true">
+  <div class="bg-grid"></div>
+  <div class="bg-blob b1"></div>
+  <div class="bg-blob b2"></div>
+  <div class="bg-blob b3"></div>
+  <div class="bg-blob b4"></div>
+  <div class="bg-bars">
+    <div class="bg-bar"></div>
+    <div class="bg-bar"></div>
+    <div class="bg-bar"></div>
+    <div class="bg-bar"></div>
+  </div>
+  <div class="bg-dots">
+    <span></span><span></span><span></span><span></span><span></span>
+    <span></span><span></span><span></span><span></span>
+  </div>
+</div>
+
+<!-- ═════ TOPBAR ═════ -->
+<header class="topbar">
+  <a href="index.html" class="brand">
+    <span class="brand-mark">
+      <img src="logo-planjar-mark.png" alt="" width="32" height="50" style="display:block;width:auto;height:42px">
+    </span>
+    <span class="brand-text">
+      <span class="brand-name">PLAN<span class="amp">&amp;</span>JAR</span>
+      <span class="brand-tag">Acompanhamento de obra</span>
+    </span>
+  </a>
+  <a href="empresa.html" class="empresa-link" title="Acesso para construtoras">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/>
+      <path d="M9 9v.01"/><path d="M9 12v.01"/><path d="M9 15v.01"/><path d="M9 18v.01"/>
+    </svg>
+    <span><span class="lbl-full">Acesso </span>Empresa</span>
+  </a>
+</header>
+
+<!-- ═════ MAIN ═════ -->
+<main class="main">
+  <div class="card">
+
+    <div class="card-icon">
+      <img src="logo-planjar-mark.png" alt="Plan&jar" width="56" height="86" style="display:block;width:auto;height:86px">
+    </div>
+
+    <div class="card-eyebrow">Acesso do cliente</div>
+    <h1 class="card-title">Acompanhe sua obra<br><span class="accent">em tempo real</span></h1>
+    <p class="card-sub">Digite o código que você recebeu da construtora pra ver o cronograma e o progresso atualizados.</p>
+
+    <label class="field-lbl" for="code">Código de acesso</label>
+    <input id="code" class="input" type="text" placeholder="OBRA-001" maxlength="20" autocomplete="off" spellcheck="false" autofocus>
+    <div id="hint" class="hint">Não tem o código? Solicite à sua construtora.</div>
+
+    <button id="enter-btn" class="btn">
+      <span id="enter-label">Entrar na obra</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+    </button>
+
+    <div class="tags">
+      <div class="tag">
+        <span class="tag-icon">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        Sem cadastro
+      </div>
+      <div class="tag">
+        <span class="tag-icon">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        Sem app
+      </div>
+      <div class="tag">
+        <span class="tag-icon">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </span>
+        Instantâneo
+      </div>
+    </div>
+
+  </div>
+</main>
+
+<div id="status-bar" class="status-bar"><span class="dot"></span><span id="status-text">Conectando…</span></div>
+
+<!-- ═════ FIREBASE ═════ -->
+<script type="module">
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyBJoDou1VsHAIAbVjESOGVh23dezmLETrE",
+  authDomain: "franco-e-fragoso-advocacia.firebaseapp.com",
+  databaseURL: "https://franco-e-fragoso-advocacia-default-rtdb.firebaseio.com",
+  projectId: "franco-e-fragoso-advocacia",
+  storageBucket: "franco-e-fragoso-advocacia.firebasestorage.app",
+  messagingSenderId: "1096895063248",
+  appId: "1:1096895063248:web:68a5c866e229124f3faad5"
+};
+
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+
+const app = initializeApp(FIREBASE_CONFIG);
+const db = getDatabase(app);
+
+window.__TAILORED__ = { db, ref, get };
+window.dispatchEvent(new CustomEvent('fb-ready'));
+</script>
+
+<script>
+const codeInput = document.getElementById('code');
+const btn       = document.getElementById('enter-btn');
+const btnLabel  = document.getElementById('enter-label');
+const hint      = document.getElementById('hint');
+const statusBar = document.getElementById('status-bar');
+const statusText= document.getElementById('status-text');
+
+function setStatus(text, kind) {
+  statusText.textContent = text;
+  statusBar.className = 'status-bar show' + (kind ? ' ' + kind : '');
+  clearTimeout(setStatus._t);
+  setStatus._t = setTimeout(() => statusBar.classList.remove('show'), 2400);
+}
+function setHint(text, err) {
+  hint.textContent = text;
+  hint.className = 'hint' + (err ? ' err' : '');
+}
+function setLoading(loading) {
+  btn.disabled = loading;
+  if (loading) btnLabel.innerHTML = '<span class="spin"></span>&nbsp;Verificando…';
+  else         btnLabel.textContent = 'Entrar na obra';
+}
+function normalize(raw) {
+  return (raw || '').trim().toUpperCase().replace(/\s+/g,'');
+}
+
+codeInput.addEventListener('input', (e) => {
+  const pos = e.target.selectionStart;
+  e.target.value = e.target.value.toUpperCase();
+  e.target.setSelectionRange(pos, pos);
+  e.target.classList.remove('error');
+});
+
+codeInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); onEnter(); }
+});
+
+btn.addEventListener('click', onEnter);
+
+async function onEnter() {
+  const code = normalize(codeInput.value);
+  if (!code) {
+    codeInput.classList.add('error');
+    setHint('Digite um código para continuar', true);
+    codeInput.focus();
+    return;
+  }
+  if (!window.__TAILORED__) {
+    setHint('Conectando ao servidor, tente novamente em instantes…', true);
+    return;
+  }
+
+  setLoading(true);
+  setHint('Verificando código…', false);
+
+  try {
+    const { db, ref, get } = window.__TAILORED__;
+    const snap = await get(ref(db, 'codes/' + code));
+    const data = snap.val();
+    if (!data || !data.obraId || data.ativo === false) {
+      codeInput.classList.add('error');
+      setHint('Código não encontrado ou desativado. Verifique com a construtora.', true);
+      setLoading(false);
+      return;
+    }
+    setStatus('Acesso liberado', '');
+    try { sessionStorage.setItem('planjar_last_code', code); } catch(e){}
+    window.location.href = `obra.html?id=${encodeURIComponent(data.obraId)}&code=${encodeURIComponent(code)}`;
+  } catch (err) {
+    console.error(err);
+    setHint('Erro de conexão. Tente novamente.', true);
+    setStatus('Sem conexão', 'error');
+    setLoading(false);
+  }
+}
+
+/* Pré-preenche se veio com ?code= na URL */
+const urlCode = new URLSearchParams(window.location.search).get('code');
+if (urlCode) {
+  codeInput.value = urlCode.toUpperCase();
+  setTimeout(onEnter, 400);
+}
+
+window.addEventListener('fb-ready', () => {
+  setStatus('Conectado', '');
+});
+</script>
+
+</body>
+</html>
