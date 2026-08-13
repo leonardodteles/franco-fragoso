@@ -1,0 +1,41 @@
+{
+  "name": "Plan&jar — Painel da Construtora",
+  "short_name": "Plan&jar",
+  "description": "Sistema de acompanhamento de obra. Painel para construtoras gerenciarem obras, equipes e cronogramas em tempo real.",
+  "start_url": "./admin.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#052028",
+  "theme_color": "#0B2E38",
+  "lang": "pt-BR",
+  "categories": ["productivity", "business"],
+  "icons": [
+    {
+      "src": "logo-planjar-mark.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "logo-planjar-mark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Nova obra",
+      "short_name": "Nova obra",
+      "description": "Cadastrar uma nova obra",
+      "url": "./admin.html#new"
+    },
+    {
+      "name": "Acessar como cliente",
+      "short_name": "Cliente",
+      "description": "Tela de acompanhamento do cliente",
+      "url": "./index.html"
+    }
+  ]
+}
